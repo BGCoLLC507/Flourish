@@ -390,6 +390,263 @@ function BucketSuggestion({ suggestion, current, onAccept, onDismiss }) {
   );
 }
 
+
+// ── Shared Review List ──
+function ReviewList({ candidates, setCandidates, inputSty }) {
+  function toggleAction(id, val) { setCandidates(p=>p.map(c=>c._id===id?{...c,action:val}:c)); }
+  function updateField(id, f, v) { setCandidates(p=>p.map(c=>c._id===id?{...c,[f]:v}:c)); }
+  function updateBucket(id, val) { setCandidates(p=>p.map(c=>c._id===id?{...c,bucket:val}:c)); }
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:10,maxHeight:380,overflowY:"auto",marginBottom:16}}>
+      {candidates.map(c=>{
+        return (
+          <div key={c._id} style={{
+            background:c.action==="skip"?"#F8F5FF":c.isDup?"#FFFBF0":"#F8FFF8",
+            border:`1px solid ${c.action==="skip"?"#DDD6F5":c.isDup?"#D4A80055":"#00AA6633"}`,
+            borderRadius:12,padding:"12px 14px",opacity:c.action==="skip"?0.5:1,transition:"all 0.2s"
+          }}>
+            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
+              <input value={c.title} onChange={e=>updateField(c._id,"title",e.target.value)}
+                style={{flex:1,fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:13,color:"#1E1A2E",
+                  background:"transparent",border:"none",outline:"none",borderBottom:"1px dashed #FF2D7844",paddingBottom:2}}/>
+              {c.isDup&&c.action==="flag"&&(
+                <span style={{background:"#FFF8E0",color:"#A07800",fontSize:9,fontWeight:700,
+                  padding:"2px 8px",borderRadius:4,border:"1px solid #D4A80055",whiteSpace:"nowrap"}}>DUPLICATE?</span>
+              )}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+              <div style={{flex:2,minWidth:110}}>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Bucket</div>
+                <select value={c.bucket} onChange={e=>updateBucket(c._id,e.target.value)}
+                  style={{...inputSty,padding:"6px 10px",fontSize:11}}>
+                  {BUCKETS.map(bk=><option key={bk.id} value={bk.id}>{bk.icon} {bk.label}</option>)}
+                </select>
+              </div>
+              <div style={{flex:2,minWidth:110}}>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Due Date</div>
+                <input type="date" value={c.dueDate} onChange={e=>updateField(c._id,"dueDate",e.target.value)}
+                  style={{...inputSty,padding:"6px 10px",fontSize:11}}/>
+              </div>
+              <div style={{flex:1,minWidth:80}}>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Cost ($)</div>
+                <input type="number" placeholder="0.00" value={c.cost} onChange={e=>updateField(c._id,"cost",e.target.value)}
+                  style={{...inputSty,padding:"6px 10px",fontSize:11}}/>
+              </div>
+            </div>
+            {c.notes&&<div style={{fontSize:11,color:"#B0A8CC",fontStyle:"italic",marginBottom:8}}>{c.notes}</div>}
+            <div style={{display:"flex",gap:6}}>
+              <button onClick={()=>toggleAction(c._id,"add")}
+                style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
+                  borderColor:c.action==="add"?"#00AA66":"#DDD6F5",background:c.action==="add"?"#E8F8F0":"transparent",
+                  color:c.action==="add"?"#00A060":"#A090C0"}}>Add</button>
+              <button onClick={()=>toggleAction(c._id,"skip")}
+                style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
+                  borderColor:c.action==="skip"?"#B0A8CC":"#DDD6F5",background:c.action==="skip"?"#F0ECF8":"transparent",
+                  color:"#A090C0"}}>Skip</button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Image / Screenshot Import ──
+function ImageImport({ existingTasks, onConfirm, onClose }) {
+  const [step, setStep] = useState("idle");
+  const [candidates, setCandidates] = useState([]);
+  const [error, setError] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const fileRef = useRef(null);
+  const PINK = "#FF2D78";
+  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+    padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
+
+  async function handleFile(file) {
+    if (!file) return;
+    setError(null);
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(",")[1]);
+      r.onerror = () => rej(new Error("Could not read file"));
+      r.readAsDataURL(file);
+    });
+    setPreview(URL.createObjectURL(file));
+    setStep("reading");
+    try {
+      const mediaType = file.type || "image/jpeg";
+      const response = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-6", max_tokens:2000,
+          system:"You are a task extractor. The user has uploaded an image which could be a handwritten note, screenshot of Apple Notes, Microsoft Notes, email, text message, spreadsheet, or any document. Extract EVERY task, to-do, action item, or deliverable. For each task suggest the most likely bucket from: work, family, church, me, projects. Return ONLY a valid JSON array: [{title,bucket,dueDate,notes,cost}]. Output ONLY the JSON array.",
+          messages:[{role:"user",content:[
+            {type:"image",source:{type:"base64",media_type:mediaType,data:base64}},
+            {type:"text",text:"Extract all tasks from this image."}
+          ]}]
+        }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message||"API error");
+      const text = data.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+      const clean = text.replace(/^```[a-z]*\n?/,"").replace(/\n?```$/,"").trim();
+      const raw = JSON.parse(clean);
+      setCandidates(raw.map((t,i)=>({...t,_id:i,isDup:isDuplicate(t.title,existingTasks),
+        action:isDuplicate(t.title,existingTasks)?"flag":"add",
+        dueDate:t.dueDate||"",notes:t.notes||"",cost:t.cost||"",bucket:t.bucket||"work"})));
+      setStep("review");
+    } catch(e) { setError("Could not read image: "+e.message); setStep("idle"); }
+  }
+
+  const addCount = candidates.filter(c=>c.action==="add").length;
+
+  return (
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal" style={{maxWidth:560}}>
+        {step==="idle"&&(
+          <>
+            <div className="modal-title">Import from <span>Screenshot</span></div>
+            <div style={{background:"#F8F5FF",border:"2px dashed #DDD6F5",borderRadius:16,
+              padding:"32px 24px",textAlign:"center",marginBottom:20,cursor:"pointer"}}
+              onClick={()=>fileRef.current?.click()}
+              onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor="#FF2D78";}}
+              onDragLeave={e=>{e.currentTarget.style.borderColor="#DDD6F5";}}
+              onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor="#DDD6F5";handleFile(e.dataTransfer.files[0]);}}>
+              <div style={{fontSize:48,marginBottom:12}}>📸</div>
+              <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:16,color:"#1E1A2E",marginBottom:6}}>
+                Drop an image or tap to choose
+              </div>
+              <div style={{fontSize:12,color:"#A090C0",fontWeight:500,lineHeight:1.6}}>
+                Handwritten notes · Apple Notes · Microsoft Notes<br/>
+                Emails · Text messages · Spreadsheets · Any document
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}}
+                onChange={e=>handleFile(e.target.files[0])}/>
+            </div>
+            {error&&<div style={{color:PINK,fontSize:12,fontWeight:600,marginBottom:12,textAlign:"center"}}>Error: {error}</div>}
+            <div className="modal-btns">
+              <button className="cancel-btn" onClick={onClose}>Cancel</button>
+            </div>
+          </>
+        )}
+        {step==="reading"&&(
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            {preview&&<img src={preview} alt="preview" style={{maxHeight:160,borderRadius:12,marginBottom:20,objectFit:"contain"}}/>}
+            <div style={{fontSize:36,marginBottom:12,animation:"pulse 1s infinite",display:"inline-block"}}>✨</div>
+            <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>Reading your image...</div>
+            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Extracting tasks, dates, and costs</div>
+          </div>
+        )}
+        {step==="review"&&(
+          <>
+            <div className="modal-title">Review <span>Tasks</span></div>
+            {preview&&<img src={preview} alt="source" style={{width:"100%",maxHeight:120,objectFit:"contain",borderRadius:10,marginBottom:14,background:"#F8F5FF"}}/>}
+            <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+              <span style={{background:"#E8F8F0",color:"#00A060",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{addCount} to add</span>
+              <span style={{background:"#F0ECF8",color:"#A090C0",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
+            </div>
+            <ReviewList candidates={candidates} setCandidates={setCandidates} inputSty={inputSty}/>
+            <div className="modal-btns">
+              <button className="cancel-btn" onClick={onClose}>Cancel</button>
+              <button className="cancel-btn" onClick={()=>{setStep("idle");setCandidates([]);setPreview(null);}}>Back</button>
+              <button className="add-btn" disabled={addCount===0} style={{opacity:addCount===0?0.5:1}}
+                onClick={()=>onConfirm(candidates.filter(c=>c.action==="add"))}>
+                Add {addCount} Task{addCount!==1?"s":""} →
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Paste / Freeform Import ──
+function PasteImport({ existingTasks, onConfirm, onClose }) {
+  const [step, setStep] = useState("idle");
+  const [text, setText] = useState("");
+  const [candidates, setCandidates] = useState([]);
+  const [error, setError] = useState(null);
+  const PINK = "#FF2D78";
+  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+    padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
+
+  async function extractTasks() {
+    if (!text.trim()) return;
+    setStep("reading"); setError(null);
+    try {
+      const response = await fetch("/api/claude", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-6", max_tokens:2000,
+          system:"You are a task extractor. The user pasted freeform text which could be bullet points, numbered list, random notes, or anything. Extract EVERY task, to-do, action item, or deliverable. For each suggest the most likely bucket from: work, family, church, me, projects. Return ONLY a valid JSON array: [{title,bucket,dueDate,notes,cost}]. Output ONLY the JSON array.",
+          messages:[{role:"user",content:"Extract all tasks from this text:\n\n"+text}]
+        }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message||"API error");
+      const raw_text = data.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+      const clean = raw_text.replace(/^```[a-z]*\n?/,"").replace(/\n?```$/,"").trim();
+      const raw = JSON.parse(clean);
+      setCandidates(raw.map((t,i)=>({...t,_id:i,isDup:isDuplicate(t.title,existingTasks),
+        action:isDuplicate(t.title,existingTasks)?"flag":"add",
+        dueDate:t.dueDate||"",notes:t.notes||"",cost:t.cost||"",bucket:t.bucket||"work"})));
+      setStep("review");
+    } catch(e) { setError("Could not extract tasks: "+e.message); setStep("idle"); }
+  }
+
+  const addCount = candidates.filter(c=>c.action==="add").length;
+
+  return (
+    <div className="overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal" style={{maxWidth:560}}>
+        {step==="idle"&&(
+          <>
+            <div className="modal-title">Paste Your <span>Notes</span></div>
+            <div style={{fontSize:13,color:"#A090C0",fontWeight:500,marginBottom:14,lineHeight:1.6}}>
+              Paste anything — bullet points, numbered list, random notes. The AI will find every task.
+            </div>
+            <textarea value={text} onChange={e=>setText(e.target.value)}
+              placeholder="Examples:&#10;• Call dentist to schedule appointment&#10;• Finish the Johnson proposal by Friday&#10;- Buy groceries: milk, eggs, bread&#10;1. Prepare Sunday sermon&#10;2. Follow up with vendor about invoice"
+              style={{...inputSty,height:200,resize:"vertical",lineHeight:1.7}}/>
+            {error&&<div style={{color:PINK,fontSize:12,fontWeight:600,marginTop:8}}>Error: {error}</div>}
+            <div className="modal-btns" style={{marginTop:14}}>
+              <button className="cancel-btn" onClick={onClose}>Cancel</button>
+              <button className="add-btn" disabled={!text.trim()} style={{opacity:!text.trim()?0.5:1}}
+                onClick={extractTasks}>Extract Tasks</button>
+            </div>
+          </>
+        )}
+        {step==="reading"&&(
+          <div style={{textAlign:"center",padding:"32px 0"}}>
+            <div style={{fontSize:36,marginBottom:12,animation:"pulse 1s infinite",display:"inline-block"}}>✨</div>
+            <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>Reading your notes...</div>
+            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Extracting tasks and suggestions</div>
+          </div>
+        )}
+        {step==="review"&&(
+          <>
+            <div className="modal-title">Review <span>Tasks</span></div>
+            <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+              <span style={{background:"#E8F8F0",color:"#00A060",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{addCount} to add</span>
+              <span style={{background:"#F0ECF8",color:"#A090C0",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
+            </div>
+            <ReviewList candidates={candidates} setCandidates={setCandidates} inputSty={inputSty}/>
+            <div className="modal-btns">
+              <button className="cancel-btn" onClick={onClose}>Cancel</button>
+              <button className="cancel-btn" onClick={()=>{setStep("idle");setCandidates([]);}}>Back</button>
+              <button className="add-btn" disabled={addCount===0} style={{opacity:addCount===0?0.5:1}}
+                onClick={()=>onConfirm(candidates.filter(c=>c.action==="add"))}>
+                Add {addCount} Task{addCount!==1?"s":""} →
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Google Drive Import ──
 function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
   const [step, setStep] = useState("idle");
@@ -404,7 +661,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
   async function searchFiles() {
     setStep("searching"); setError(null);
     try {
-      const res = await fetch("http://localhost:3001/api/claude", {
+      const res = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           model:"claude-sonnet-4-6", max_tokens:1000,
@@ -425,7 +682,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
   async function extractFromFile(file) {
     setSelectedFile(file); setStep("extracting"); setError(null);
     try {
-      const res = await fetch("http://localhost:3001/api/claude", {
+      const res = await fetch("/api/claude", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
           model:"claude-sonnet-4-6", max_tokens:2000,
@@ -649,6 +906,8 @@ export default function Flourish() {
   const [deferModal, setDeferModal]   = useState(null);
   const [showImport, setShowImport]   = useState(false);
   const [showDrive, setShowDrive]     = useState(false);
+  const [showImage, setShowImage]     = useState(false);
+  const [showPaste, setShowPaste]     = useState(false);
   const [showBudgetPanel, setShowBudgetPanel] = useState(false);
   const [importSuccess, setImportSuccess]     = useState(null);
   const [newTask, setNewTask] = useState({ title:"",dueDate:"",cost:"",notes:"",source:"manual",bucket:"work" });
@@ -751,6 +1010,23 @@ export default function Flourish() {
   }
 
   function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); setEditTask(null); setEditSuggestion(null); }
+
+  function handleSmartImport(candidates) {
+    const base = Math.max(...tasks.map(t=>t.id));
+    const toAdd = candidates.map((c,i) => {
+      const cost = c.cost ? parseFloat(c.cost) : null;
+      const bs = cost===null?"flagged":cost<=remaining?"fits":"defer";
+      const bt = tasks.filter(t=>t.bucket===(c.bucket||"work"));
+      return { id:base+i+1, title:c.title, bucket:c.bucket||"work",
+        priority:bt.length+i+1, dueDate:c.dueDate||"2026-12-31",
+        cost, budgetStatus:bs, status:bs==="defer"?"deferred":"active",
+        source:"screenshot", notes:c.notes||"" };
+    });
+    setTasks(p=>[...p,...toAdd]);
+    setShowImage(false); setShowPaste(false);
+    setImportSuccess(toAdd.length);
+    setTimeout(()=>setImportSuccess(null),4000);
+  }
 
   function handleDriveImport(candidates) {
     const base = Math.max(...tasks.map(t=>t.id));
@@ -1026,8 +1302,11 @@ export default function Flourish() {
                 <button className="imp-btn drive" onClick={()=>setShowDrive(true)}>
                   <span>📄</span><span>Google Drive (RWRLRR)</span>
                 </button>
-                {[{id:"screenshot",label:"Screenshot / Image",icon:"📸"},{id:"paste",label:"Copy & Paste",icon:"📋"},{id:"apple-note",label:"Apple Note Export",icon:"📱"}].map(m=>(
-                  <button key={m.id} className="imp-btn" onClick={()=>{setInputMode(m.id);setShowAdd(true);}}>
+                {[{id:"screenshot",label:"Screenshot / Image",icon:"📸",action:()=>setShowImage(true)},
+                  {id:"paste",label:"Copy & Paste",icon:"📋",action:()=>setShowPaste(true)},
+                  {id:"apple-note",label:"Apple Note Export",icon:"📱",action:()=>setShowImage(true)},
+                ].map(m=>(
+                  <button key={m.id} className="imp-btn" onClick={m.action}>
                     <span>{m.icon}</span><span>{m.label}</span>
                   </button>
                 ))}
@@ -1135,6 +1414,8 @@ export default function Flourish() {
         {/* MODALS */}
 
         {showDrive&&<DriveImport existingTasks={tasks} remaining={remaining} onConfirm={handleDriveImport} onClose={()=>setShowDrive(false)}/>}
+        {showImage&&<ImageImport existingTasks={tasks} onConfirm={handleSmartImport} onClose={()=>setShowImage(false)}/>}
+        {showPaste&&<PasteImport existingTasks={tasks} onConfirm={handleSmartImport} onClose={()=>setShowPaste(false)}/>}
 
         {/* ADD TASK */}
         {showAdd&&!flagPrompt&&(
@@ -1239,9 +1520,9 @@ export default function Flourish() {
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {[
                   {id:"drive",label:"Google Drive (RWRLRR)",icon:"📄",desc:"Pull checklists & action plans",action:()=>{setShowImport(false);setShowDrive(true);}},
-                  {id:"screenshot",label:"Screenshot / Image",icon:"📸",desc:"Photo of any note or list",action:()=>{setInputMode("screenshot");setShowImport(false);setShowAdd(true);}},
-                  {id:"paste",label:"Copy & Paste",icon:"📋",desc:"Paste text from anywhere",action:()=>{setInputMode("paste");setShowImport(false);setShowAdd(true);}},
-                  {id:"apple-note",label:"Apple Note Export",icon:"📱",desc:"Share or export from Notes app",action:()=>{setInputMode("apple-note");setShowImport(false);setShowAdd(true);}},
+                  {id:"screenshot",label:"Screenshot / Image",icon:"📸",desc:"Photo of any note or list",action:()=>{setShowImport(false);setShowImage(true);}},
+                  {id:"paste",label:"Copy & Paste",icon:"📋",desc:"Paste text from anywhere",action:()=>{setShowImport(false);setShowPaste(true);}},
+                  {id:"apple-note",label:"Apple Note Export",icon:"📱",desc:"Share or screenshot from Notes app",action:()=>{setShowImport(false);setShowImage(true);}},
                 ].map(m=>(
                   <button key={m.id} onClick={m.action}
                     style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,
