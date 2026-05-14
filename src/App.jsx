@@ -1,5 +1,42 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+// ── Supabase Client ──
+const SUPA_URL = "https://ohvyvmxaolrbincvrcxe.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9odnl2bXhhb2xyYmluY3ZyY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MTY4MjYsImV4cCI6MjA5NDI5MjgyNn0.jiPXvotdKTZJRyUmrtlgB2g3SEZy69U-gcdQgzlKS6M";
+
+const supa = {
+  headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
+  async getTasks() {
+    try {
+      const r = await fetch(SUPA_URL + "/rest/v1/tasks?order=priority.asc", { headers: this.headers });
+      return r.ok ? r.json() : [];
+    } catch { return []; }
+  },
+  async saveTasks(tasks) {
+    try {
+      await fetch(SUPA_URL + "/rest/v1/tasks", {
+        method: "POST",
+        headers: { ...this.headers, "Prefer": "resolution=merge-duplicates" },
+        body: JSON.stringify(tasks)
+      });
+    } catch(e) { console.error("save error", e); }
+  },
+  async updateTask(id, changes) {
+    try {
+      await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+        method: "PATCH", headers: this.headers, body: JSON.stringify(changes)
+      });
+    } catch(e) { console.error("update error", e); }
+  },
+  async deleteTask(id) {
+    try {
+      await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+        method: "DELETE", headers: this.headers
+      });
+    } catch(e) { console.error("delete error", e); }
+  }
+};
+
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');`;
 
 // ── PIN System ──
@@ -893,10 +930,39 @@ export default function Flourish() {
   if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
   if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
 
-  const [tasks, setTasks]             = useState(INIT_TASKS);
+  if (dbLoading) return (
+    <div style={{minHeight:"100vh",background:"#EDE8FA",display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:16}}>
+      <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
+        background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
+        WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
+      <div style={{fontSize:36,animation:"pulse 1s infinite"}}>🌸</div>
+      <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
+    </div>
+  );
+
+  const [tasks, setTasks]             = useState([]);
+  const [dbLoading, setDbLoading]     = useState(true);
   const [budget, setBudget]           = useState(2000);
   const [budgetInput, setBudgetInput] = useState("2000");
   const [editingBudget, setEditingBudget] = useState(false);
+
+  // Load tasks from Supabase on mount
+  useEffect(() => {
+    async function loadTasks() {
+      setDbLoading(true);
+      const saved = await supa.getTasks();
+      if (saved && saved.length > 0) {
+        setTasks(saved);
+      } else {
+        // First time — seed with sample tasks
+        setTasks(INIT_TASKS);
+        await supa.saveTasks(INIT_TASKS);
+      }
+      setDbLoading(false);
+    }
+    loadTasks();
+  }, []);
   const [activeBucket, setActiveBucket]   = useState("all");
   const [viewMode, setViewMode]       = useState("list");
   const [showAdd, setShowAdd]         = useState(false);
@@ -971,11 +1037,18 @@ export default function Flourish() {
   function updateDate(id,d) { setTasks(p=>p.map(t=>t.id===id?{...t,dueDate:d}:t)); }
   function openDefer(task) { setDeferModal({id:task.id,deferDate:task.deferDate||""}); }
   function saveDefer() {
-    setTasks(p=>p.map(t=>t.id===deferModal.id?{...t,status:"deferred",budgetStatus:"defer",deferDate:deferModal.deferDate||"TBD"}:t));
+    const dd = deferModal.deferDate||"TBD";
+    setTasks(p=>p.map(t=>t.id===deferModal.id?{...t,status:"deferred",budgetStatus:"defer",deferDate:dd}:t));
+    supa.updateTask(deferModal.id, {status:"deferred",budgetStatus:"defer",deferDate:dd});
     setDeferModal(null);
   }
   function undefer(id) {
-    setTasks(p=>p.map(t=>t.id===id?{...t,status:"active",budgetStatus:t.cost?(t.cost<=remaining?"fits":"defer"):"flagged",deferDate:null}:t));
+    setTasks(p=>p.map(t=>{
+      if(t.id!==id) return t;
+      const bs = t.cost?(t.cost<=remaining?"fits":"defer"):"flagged";
+      supa.updateTask(id,{status:"active",budgetStatus:bs,deferDate:null});
+      return {...t,status:"active",budgetStatus:bs,deferDate:null};
+    }));
   }
 
   function handleAdd() {
@@ -988,15 +1061,17 @@ export default function Flourish() {
   function finalize(task, cost) {
     const bs = cost===null?"flagged":cost<=remaining?"fits":"defer";
     const bt = tasks.filter(t=>t.bucket===task.bucket);
-    setTasks(p=>[...p,{
-      id:Math.max(...p.map(t=>t.id))+1,
+    const newTask2 = {
+      id:Math.max(0,...tasks.map(t=>t.id))+1,
       title:task.title, bucket:task.bucket,
       priority:bt.length+1,
       dueDate:task.dueDate||"2026-12-31",
       cost, budgetStatus:bs,
       status:bs==="defer"?"deferred":"active",
       source:task.source, notes:task.notes,
-    }]);
+    };
+    setTasks(p=>[...p, newTask2]);
+    supa.saveTasks([newTask2]);
     setNewTask({title:"",dueDate:"",cost:"",notes:"",source:"manual",bucket:"work"});
     setSuggestion(null);
     setShowAdd(false); setFlagPrompt(null);
@@ -1005,14 +1080,16 @@ export default function Flourish() {
   function saveEdit() {
     const cost = editTask.cost!==""&&editTask.cost!==null ? parseFloat(editTask.cost) : null;
     const bs = cost===null?"flagged":cost<=remaining?"fits":"defer";
-    setTasks(p=>p.map(t=>t.id===editTask.id?{...t,...editTask,cost,budgetStatus:bs}:t));
+    const updated = {...editTask, cost, budgetStatus:bs};
+    setTasks(p=>p.map(t=>t.id===editTask.id?updated:t));
+    supa.updateTask(editTask.id, {title:updated.title,bucket:updated.bucket,dueDate:updated.dueDate,cost,budgetStatus:bs,notes:updated.notes});
     setEditTask(null); setEditSuggestion(null);
   }
 
-  function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); setEditTask(null); setEditSuggestion(null); }
+  function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); supa.deleteTask(id); setEditTask(null); setEditSuggestion(null); }
 
   function handleSmartImport(candidates) {
-    const base = Math.max(...tasks.map(t=>t.id));
+    const base = Math.max(0,...tasks.map(t=>t.id));
     const toAdd = candidates.map((c,i) => {
       const cost = c.cost ? parseFloat(c.cost) : null;
       const bs = cost===null?"flagged":cost<=remaining?"fits":"defer";
@@ -1023,6 +1100,7 @@ export default function Flourish() {
         source:"screenshot", notes:c.notes||"" };
     });
     setTasks(p=>[...p,...toAdd]);
+    supa.saveTasks(toAdd);
     setShowImage(false); setShowPaste(false);
     setImportSuccess(toAdd.length);
     setTimeout(()=>setImportSuccess(null),4000);
@@ -1039,6 +1117,7 @@ export default function Flourish() {
         status:bs==="defer"?"deferred":"active", source:"google-doc", notes:c.notes||"" };
     });
     setTasks(p=>[...p,...toAdd]);
+    supa.saveTasks(toAdd);
     setShowDrive(false);
     setImportSuccess(toAdd.length);
     setActiveBucket("work");
