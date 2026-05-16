@@ -1,45 +1,37 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ── Supabase Client ──
-const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
+function getSupaURL() { return import.meta.env.VITE_SUPABASE_URL || ""; }
+function getSupaKey() { return import.meta.env.VITE_SUPABASE_ANON_KEY || ""; }
 function getSupaHeaders() {
-  return {
-    "apikey": SUPA_KEY,
-    "Authorization": "Bearer " + SUPA_KEY,
-    "Content-Type": "application/json"
-  };
+  const key = getSupaKey();
+  return { "apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json" };
 }
-
 async function supaGetTasks() {
   try {
-    const r = await fetch(SUPA_URL + "/rest/v1/tasks?order=priority.asc", { headers: getSupaHeaders() });
+    const r = await fetch(getSupaURL() + "/rest/v1/tasks?order=priority.asc", { headers: getSupaHeaders() });
     return r.ok ? r.json() : [];
   } catch { return []; }
 }
-
 async function supaUpsert(tasks) {
   try {
-    await fetch(SUPA_URL + "/rest/v1/tasks", {
+    await fetch(getSupaURL() + "/rest/v1/tasks", {
       method: "POST",
       headers: { ...getSupaHeaders(), "Prefer": "resolution=merge-duplicates" },
       body: JSON.stringify(tasks)
     });
   } catch(e) { console.error("save error", e); }
 }
-
 async function supaUpdate(id, changes) {
   try {
-    await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+    await fetch(getSupaURL() + "/rest/v1/tasks?id=eq." + id, {
       method: "PATCH", headers: getSupaHeaders(), body: JSON.stringify(changes)
     });
   } catch(e) { console.error("update error", e); }
 }
-
 async function supaDelete(id) {
   try {
-    await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+    await fetch(getSupaURL() + "/rest/v1/tasks?id=eq." + id, {
       method: "DELETE", headers: getSupaHeaders()
     });
   } catch(e) { console.error("delete error", e); }
