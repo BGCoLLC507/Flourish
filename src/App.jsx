@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ── Supabase Client ──
-const SUPA_URL = "https://ohvyvmxaolrbincvrcxe.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9odnl2bXhhb2xyYmluY3ZyY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MTY4MjYsImV4cCI6MjA5NDI5MjgyNn0.jiPXvotdKTZJRyUmrtlgB2g3SEZy69U-gcdQgzlKS6M";
+const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const supa = {
   headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
