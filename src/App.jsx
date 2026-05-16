@@ -4,38 +4,46 @@ import { useState, useRef, useEffect, useCallback } from "react";
 const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supa = {
-  headers: { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json" },
-  async getTasks() {
-    try {
-      const r = await fetch(SUPA_URL + "/rest/v1/tasks?order=priority.asc", { headers: this.headers });
-      return r.ok ? r.json() : [];
-    } catch { return []; }
-  },
-  async saveTasks(tasks) {
-    try {
-      await fetch(SUPA_URL + "/rest/v1/tasks", {
-        method: "POST",
-        headers: { ...this.headers, "Prefer": "resolution=merge-duplicates" },
-        body: JSON.stringify(tasks)
-      });
-    } catch(e) { console.error("save error", e); }
-  },
-  async updateTask(id, changes) {
-    try {
-      await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
-        method: "PATCH", headers: this.headers, body: JSON.stringify(changes)
-      });
-    } catch(e) { console.error("update error", e); }
-  },
-  async deleteTask(id) {
-    try {
-      await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
-        method: "DELETE", headers: this.headers
-      });
-    } catch(e) { console.error("delete error", e); }
-  }
-};
+function getSupaHeaders() {
+  return {
+    "apikey": SUPA_KEY,
+    "Authorization": "Bearer " + SUPA_KEY,
+    "Content-Type": "application/json"
+  };
+}
+
+async function supaGetTasks() {
+  try {
+    const r = await fetch(SUPA_URL + "/rest/v1/tasks?order=priority.asc", { headers: getSupaHeaders() });
+    return r.ok ? r.json() : [];
+  } catch { return []; }
+}
+
+async function supaUpsert(tasks) {
+  try {
+    await fetch(SUPA_URL + "/rest/v1/tasks", {
+      method: "POST",
+      headers: { ...getSupaHeaders(), "Prefer": "resolution=merge-duplicates" },
+      body: JSON.stringify(tasks)
+    });
+  } catch(e) { console.error("save error", e); }
+}
+
+async function supaUpdate(id, changes) {
+  try {
+    await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+      method: "PATCH", headers: getSupaHeaders(), body: JSON.stringify(changes)
+    });
+  } catch(e) { console.error("update error", e); }
+}
+
+async function supaDelete(id) {
+  try {
+    await fetch(SUPA_URL + "/rest/v1/tasks?id=eq." + id, {
+      method: "DELETE", headers: getSupaHeaders()
+    });
+  } catch(e) { console.error("delete error", e); }
+}
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');`;
 
@@ -951,13 +959,13 @@ export default function Flourish() {
   useEffect(() => {
     async function loadTasks() {
       setDbLoading(true);
-      const saved = await supa.getTasks();
+      const saved = await supaGetTasks();
       if (saved && saved.length > 0) {
         setTasks(saved);
       } else {
         // First time — seed with sample tasks
         setTasks(INIT_TASKS);
-        await supa.saveTasks(INIT_TASKS);
+        await supaUpsert(INIT_TASKS);
       }
       setDbLoading(false);
     }
@@ -1039,14 +1047,14 @@ export default function Flourish() {
   function saveDefer() {
     const dd = deferModal.deferDate||"TBD";
     setTasks(p=>p.map(t=>t.id===deferModal.id?{...t,status:"deferred",budgetStatus:"defer",deferDate:dd}:t));
-    supa.updateTask(deferModal.id, {status:"deferred",budgetStatus:"defer",deferDate:dd});
+    supaUpdate(deferModal.id, {status:"deferred",budgetStatus:"defer",deferDate:dd});
     setDeferModal(null);
   }
   function undefer(id) {
     setTasks(p=>p.map(t=>{
       if(t.id!==id) return t;
       const bs = t.cost?(t.cost<=remaining?"fits":"defer"):"flagged";
-      supa.updateTask(id,{status:"active",budgetStatus:bs,deferDate:null});
+      supaUpdate(id,{status:"active",budgetStatus:bs,deferDate:null});
       return {...t,status:"active",budgetStatus:bs,deferDate:null};
     }));
   }
@@ -1071,7 +1079,7 @@ export default function Flourish() {
       source:task.source, notes:task.notes,
     };
     setTasks(p=>[...p, newTask2]);
-    supa.saveTasks([newTask2]);
+    supaUpsert([newTask2]);
     setNewTask({title:"",dueDate:"",cost:"",notes:"",source:"manual",bucket:"work"});
     setSuggestion(null);
     setShowAdd(false); setFlagPrompt(null);
@@ -1082,11 +1090,11 @@ export default function Flourish() {
     const bs = cost===null?"flagged":cost<=remaining?"fits":"defer";
     const updated = {...editTask, cost, budgetStatus:bs};
     setTasks(p=>p.map(t=>t.id===editTask.id?updated:t));
-    supa.updateTask(editTask.id, {title:updated.title,bucket:updated.bucket,dueDate:updated.dueDate,cost,budgetStatus:bs,notes:updated.notes});
+    supaUpdate(editTask.id, {title:updated.title,bucket:updated.bucket,dueDate:updated.dueDate,cost,budgetStatus:bs,notes:updated.notes});
     setEditTask(null); setEditSuggestion(null);
   }
 
-  function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); supa.deleteTask(id); setEditTask(null); setEditSuggestion(null); }
+  function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); supaDelete(id); setEditTask(null); setEditSuggestion(null); }
 
   function handleSmartImport(candidates) {
     const base = Math.max(0,...tasks.map(t=>t.id));
@@ -1100,7 +1108,7 @@ export default function Flourish() {
         source:"screenshot", notes:c.notes||"" };
     });
     setTasks(p=>[...p,...toAdd]);
-    supa.saveTasks(toAdd);
+    supaUpsert(toAdd);
     setShowImage(false); setShowPaste(false);
     setImportSuccess(toAdd.length);
     setTimeout(()=>setImportSuccess(null),4000);
@@ -1117,7 +1125,7 @@ export default function Flourish() {
         status:bs==="defer"?"deferred":"active", source:"google-doc", notes:c.notes||"" };
     });
     setTasks(p=>[...p,...toAdd]);
-    supa.saveTasks(toAdd);
+    supaUpsert(toAdd);
     setShowDrive(false);
     setImportSuccess(toAdd.length);
     setActiveBucket("work");
