@@ -526,8 +526,11 @@ function ImageImport({ existingTasks, onConfirm, onClose }) {
       const data = await response.json();
       if (data.error) throw new Error(data.error.message||"API error");
       const text = data.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
-      const clean = text.replace(/^```[a-z]*\n?/,"").replace(/\n?```$/,"").trim();
-      const raw = JSON.parse(clean);
+      // Extract JSON array from anywhere in the response
+      const jsonMatch = text.match(/\[.*\]/s);
+      if (!jsonMatch) throw new Error("No tasks found in image");
+      const raw = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error("No tasks found in image");
       setCandidates(raw.map((t,i)=>({...t,_id:i,isDup:isDuplicate(t.title,existingTasks),
         action:isDuplicate(t.title,existingTasks)?"flag":"add",
         dueDate:t.dueDate||"",notes:t.notes||"",cost:t.cost||"",bucket:t.bucket||"work"})));
@@ -623,8 +626,9 @@ function PasteImport({ existingTasks, onConfirm, onClose }) {
       const data = await response.json();
       if (data.error) throw new Error(data.error.message||"API error");
       const raw_text = data.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
-      const clean = raw_text.replace(/^```[a-z]*\n?/,"").replace(/\n?```$/,"").trim();
-      const raw = JSON.parse(clean);
+      const jsonMatch2 = raw_text.match(/\[.*\]/s);
+      if (!jsonMatch2) throw new Error("No tasks found in text");
+      const raw = JSON.parse(jsonMatch2[0]);
       setCandidates(raw.map((t,i)=>({...t,_id:i,isDup:isDuplicate(t.title,existingTasks),
         action:isDuplicate(t.title,existingTasks)?"flag":"add",
         dueDate:t.dueDate||"",notes:t.notes||"",cost:t.cost||"",bucket:t.bucket||"work"})));
