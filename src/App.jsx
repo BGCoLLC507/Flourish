@@ -912,16 +912,16 @@ export default function Flourish() {
   });
 
   function handleSetupComplete(pin, recoveryCode) {
-    const s = { pin, recoveryCode, unlocked: true };
-    setPinState(s);
-    try { sessionStorage.setItem("flourish_pin", JSON.stringify(s)); } catch {}
+    const newPinState = { pin, recoveryCode, unlocked: true };
+    setPinState(newPinState);
+    try { sessionStorage.setItem("flourish_pin", JSON.stringify(newPinState)); } catch {}
   }
 
   function handleUnlock(attempt) {
     if (attempt === "__RECOVERY__" || attempt === pinState.pin) {
-      const s = { ...pinState, unlocked: true };
-      setPinState(s);
-      try { sessionStorage.setItem("flourish_pin", JSON.stringify(s)); } catch {}
+      const unlockedState = { ...pinState, unlocked: true };
+      setPinState(unlockedState);
+      try { sessionStorage.setItem("flourish_pin", JSON.stringify(unlockedState)); } catch {}
       return true;
     }
     return false;
@@ -930,19 +930,10 @@ export default function Flourish() {
   if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
   if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
 
-  if (dbLoading) return (
-    <div style={{minHeight:"100vh",background:"#EDE8FA",display:"flex",flexDirection:"column",
-      alignItems:"center",justifyContent:"center",gap:16}}>
-      <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
-        background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
-        WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
-      <div style={{fontSize:36,animation:"pulse 1s infinite"}}>🌸</div>
-      <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
-    </div>
-  );
+  // loading handled inline in render
 
   const [tasks, setTasks]             = useState([]);
-  const [dbLoading, setDbLoading]     = useState(true);
+  const [isLoadingFromDB, setIsLoadingFromDB]     = useState(true);
   const [budget, setBudget]           = useState(2000);
   const [budgetInput, setBudgetInput] = useState("2000");
   const [editingBudget, setEditingBudget] = useState(false);
@@ -950,7 +941,7 @@ export default function Flourish() {
   // Load tasks from Supabase on mount
   useEffect(() => {
     async function loadTasks() {
-      setDbLoading(true);
+      setIsLoadingFromDB(true);
       const saved = await supaGetTasks();
       if (saved && saved.length > 0) {
         setTasks(saved);
@@ -959,7 +950,7 @@ export default function Flourish() {
         setTasks(INIT_TASKS);
         await supaUpsert(INIT_TASKS);
       }
-      setDbLoading(false);
+      setIsLoadingFromDB(false);
     }
     loadTasks();
   }, []);
@@ -991,8 +982,8 @@ export default function Flourish() {
     clearTimeout(suggTimer.current);
     if (val.length > 4) {
       suggTimer.current = setTimeout(() => {
-        const s = suggestBucket(val);
-        if (s && s !== newTask.bucket) setSuggestion(s);
+        const suggested = suggestBucket(val);
+        if (suggested && suggested !== newTask.bucket) setSuggestion(suggested);
         else setSuggestion(null);
       }, 600);
     } else { setSuggestion(null); }
@@ -1006,8 +997,8 @@ export default function Flourish() {
     clearTimeout(suggTimer.current);
     if (val.length > 4) {
       suggTimer.current = setTimeout(() => {
-        const s = suggestBucket(val);
-        if (s && s !== editTask?.bucket) setEditSuggestion(s);
+        const suggested = suggestBucket(val);
+        if (suggested && suggested !== editTask?.bucket) setEditSuggestion(suggested);
         else setEditSuggestion(null);
       }, 600);
     } else { setEditSuggestion(null); }
@@ -1025,11 +1016,11 @@ export default function Flourish() {
   }
 
   function movePriority(id, dir, bid) {
-    const s=getFiltered(bid), i=s.findIndex(t=>t.id===id), j=i+dir;
-    if(j<0||j>=s.length) return;
+    const sorted=getFiltered(bid), i=sorted.findIndex(t=>t.id===id), j=i+dir;
+    if(j<0||j>=sorted.length) return;
     setTasks(prev=>prev.map(t=>{
-      if(t.id===s[i].id) return {...t,priority:s[j].priority};
-      if(t.id===s[j].id) return {...t,priority:s[i].priority};
+      if(t.id===sorted[i].id) return {...t,priority:sorted[j].priority};
+      if(t.id===sorted[j].id) return {...t,priority:sorted[i].priority};
       return t;
     }));
   }
@@ -1310,6 +1301,16 @@ export default function Flourish() {
 
       <div className="app">
         {importSuccess&&<div className="toast">✨ {importSuccess} task{importSuccess!==1?"s":""} imported to Work!</div>}
+        {isLoadingFromDB&&(
+          <div style={{position:"fixed",inset:0,background:"#EDE8FA",display:"flex",flexDirection:"column",
+            alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>
+            <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
+              background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
+              WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
+            <div style={{fontSize:36}}>🌸</div>
+            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
+          </div>
+        )}
 
         {/* HEADER */}
         <div className="hdr">
