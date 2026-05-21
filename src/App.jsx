@@ -966,6 +966,7 @@ export default function Flourish() {
   const [editTask, setEditTask]       = useState(null);
   const [deferModal, setDeferModal]   = useState(null);
   const [showImport, setShowImport]   = useState(false);
+  const [showTimeAlloc, setShowTimeAlloc] = useState(false);
   const [showDrive, setShowDrive]     = useState(false);
   const [showImage, setShowImage]     = useState(false);
   const [showPaste, setShowPaste]     = useState(false);
@@ -1410,6 +1411,10 @@ export default function Flourish() {
                 </div>;
               })}
             </div>
+            <div>
+              <div className="sec-label">Time Allocation</div>
+              <TimeAllocChart tasks={tasks}/>
+            </div>
           </div>
 
           <div className="main-area" style={{"--ac":accent}}>
@@ -1493,6 +1498,9 @@ export default function Flourish() {
           <div className="mob-nav-item" onClick={()=>setShowImport(true)}>
             <span className="mob-nav-icon">⬆️</span><span className="mob-nav-label">Import</span>
           </div>
+          <div className="mob-nav-item" onClick={()=>setShowTimeAlloc(true)}>
+            <span className="mob-nav-icon">📊</span><span className="mob-nav-label" style={{color:"#8B5CF6"}}>My Time</span>
+          </div>
         </div>
 
         {/* MODALS */}
@@ -1500,6 +1508,7 @@ export default function Flourish() {
         {showDrive&&<DriveImport existingTasks={tasks} remaining={remaining} onConfirm={handleDriveImport} onClose={()=>setShowDrive(false)}/>}
         {showImage&&<ImageImport existingTasks={tasks} onConfirm={handleSmartImport} onClose={()=>setShowImage(false)}/>}
         {showPaste&&<PasteImport existingTasks={tasks} onConfirm={handleSmartImport} onClose={()=>setShowPaste(false)}/>}
+        {showTimeAlloc&&<TimeAllocModal tasks={tasks} onClose={()=>setShowTimeAlloc(false)}/>}
 
         {/* ADD TASK */}
         {showAdd&&!flagPrompt&&(
@@ -1673,6 +1682,140 @@ export default function Flourish() {
         )}
       </div>
     </>
+  );
+}
+
+
+// ── Time Allocation Chart ──
+function TimeAllocChart({ tasks, onClose }) {
+  const total = tasks.length || 1;
+  const bucketData = BUCKETS.map(b => ({
+    ...b,
+    count: tasks.filter(t => t.bucket === b.id).length,
+    pct: Math.round((tasks.filter(t => t.bucket === b.id).length / total) * 100)
+  })).filter(b => b.count > 0);
+
+  // Build SVG pie slices
+  function buildSlices() {
+    let startAngle = -90;
+    return bucketData.map(b => {
+      const angle = (b.count / total) * 360;
+      const endAngle = startAngle + angle;
+      const r = 55, cx = 65, cy = 65;
+      const start = polarToCart(cx, cy, r, startAngle);
+      const end = polarToCart(cx, cy, r, endAngle);
+      const largeArc = angle > 180 ? 1 : 0;
+      const d = `M${cx},${cy} L${start.x},${start.y} A${r},${r} 0 ${largeArc},1 ${end.x},${end.y} Z`;
+      startAngle = endAngle;
+      return { ...b, d };
+    });
+  }
+
+  function polarToCart(cx, cy, r, deg) {
+    const rad = (deg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  const slices = buildSlices();
+
+  return (
+    <div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", marginBottom:14 }}>
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          {slices.map(s => <path key={s.id} d={s.d} fill={s.color}/>)}
+          <circle cx="65" cy="65" r="32" fill="white"/>
+          <text x="65" y="61" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1E1A2E">{tasks.length}</text>
+          <text x="65" y="74" textAnchor="middle" fontSize="9" fill="#A090C0">tasks</text>
+        </svg>
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+        {bucketData.map(b => (
+          <div key={b.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <div style={{ width:10, height:10, borderRadius:2, background:b.color, flexShrink:0 }}/>
+            <span style={{ fontSize:11, color:"#A090C0", flex:1 }}>{b.label}</span>
+            <div style={{ width:60, height:4, background:"#DDD6F5", borderRadius:2, overflow:"hidden" }}>
+              <div style={{ width:`${b.pct}%`, height:"100%", background:b.color, borderRadius:2 }}/>
+            </div>
+            <span style={{ fontSize:11, fontWeight:700, color:b.color, minWidth:28, textAlign:"right" }}>{b.pct}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Time Allocation Modal (mobile) ──
+function TimeAllocModal({ tasks, onClose }) {
+  const total = tasks.length || 1;
+  const bucketData = BUCKETS.map(b => ({
+    ...b,
+    count: tasks.filter(t => t.bucket === b.id).length,
+    pct: Math.round((tasks.filter(t => t.bucket === b.id).length / total) * 100)
+  })).filter(b => b.count > 0);
+
+  function buildSlices() {
+    let startAngle = -90;
+    return bucketData.map(b => {
+      const angle = (b.count / total) * 360;
+      const endAngle = startAngle + angle;
+      const r = 40, cx = 45, cy = 45;
+      const start = polarToCart(cx, cy, r, startAngle);
+      const end = polarToCart(cx, cy, r, endAngle);
+      const largeArc = angle > 180 ? 1 : 0;
+      const d = `M${cx},${cy} L${start.x},${start.y} A${r},${r} 0 ${largeArc},1 ${end.x},${end.y} Z`;
+      startAngle = endAngle;
+      return { ...b, d };
+    });
+  }
+
+  function polarToCart(cx, cy, r, deg) {
+    const rad = (deg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  const slices = buildSlices();
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth:480 }}>
+        <div style={{ width:36, height:4, background:"#DDD6F5", borderRadius:2, margin:"0 auto 16px" }}/>
+        <div className="modal-title">My <span>Time</span> Allocation</div>
+        <div style={{ display:"flex", alignItems:"center", gap:20, marginBottom:20 }}>
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            {slices.map(s => <path key={s.id} d={s.d} fill={s.color}/>)}
+            <circle cx="45" cy="45" r="22" fill="white"/>
+            <text x="45" y="42" textAnchor="middle" fontSize="11" fontWeight="700" fill="#1E1A2E">{tasks.length}</text>
+            <text x="45" y="53" textAnchor="middle" fontSize="8" fill="#A090C0">tasks</text>
+          </svg>
+          <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8 }}>
+            {bucketData.map(b => (
+              <div key={b.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ width:8, height:8, borderRadius:2, background:b.color }}/>
+                  <span style={{ fontSize:11, color:"#A090C0" }}>{b.label.split(" ")[0]}</span>
+                </div>
+                <span style={{ fontSize:11, fontWeight:700, color:b.color }}>{b.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ fontSize:9, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"#C0B8D8", marginBottom:10 }}>Task Breakdown</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {bucketData.map(b => (
+            <div key={b.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:10, color:"#A090C0", width:56 }}>{b.label.split(" ")[0]}</span>
+              <div style={{ flex:1, height:6, background:"#DDD6F5", borderRadius:3, overflow:"hidden" }}>
+                <div style={{ width:`${b.pct}%`, height:"100%", background:b.color, borderRadius:3 }}/>
+              </div>
+              <span style={{ fontSize:10, fontWeight:700, color:b.color, width:20, textAlign:"right" }}>{b.count}</span>
+            </div>
+          ))}
+        </div>
+        <div className="modal-btns" style={{ marginTop:20 }}>
+          <button className="cancel-btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
