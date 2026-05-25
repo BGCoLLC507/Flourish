@@ -967,6 +967,8 @@ export default function Flourish() {
   const [deferModal, setDeferModal]   = useState(null);
   const [showImport, setShowImport]   = useState(false);
   const [showTimeAlloc, setShowTimeAlloc] = useState(false);
+  const [selectMode, setSelectMode]     = useState(false);
+  const [selectedIds, setSelectedIds]   = useState(new Set());
   const [showDrive, setShowDrive]     = useState(false);
   const [showImage, setShowImage]     = useState(false);
   const [showPaste, setShowPaste]     = useState(false);
@@ -1097,6 +1099,30 @@ export default function Flourish() {
     });
     // Save updated priorities to Supabase
     updated.forEach(t => supaUpdate(t.id, { priority: t.priority }));
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(display.map(t => t.id)));
+  }
+
+  function deselectAll() { setSelectedIds(new Set()); }
+
+  function exitSelectMode() { setSelectMode(false); setSelectedIds(new Set()); }
+
+  async function batchDelete() {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    setTasks(p => p.filter(t => !selectedIds.has(t.id)));
+    ids.forEach(id => supaDelete(id));
+    exitSelectMode();
   }
 
   function handleSmartImport(candidates) {
@@ -1438,6 +1464,13 @@ export default function Flourish() {
                 {activeBucket==="all"?<>All <span>Tasks</span></>:<>{curBucket?.icon} <span>{curBucket?.label}</span></>}
               </div>
               <div className="hdr-right">
+                {!selectMode?(
+                  <button className="act-btn" style={{border:`1px solid #DDD6F5`,color:"#A090C0",background:"#fff",padding:"7px 14px",borderRadius:9,fontSize:11,fontFamily:"Syne,sans-serif",fontWeight:700,cursor:"pointer"}}
+                    onClick={()=>{setSelectMode(true);setSelectedIds(new Set());}}>☑ Select</button>
+                ):(
+                  <button className="act-btn" style={{border:`1px solid ${PINK}44`,color:PINK,background:"#FFF0F5",padding:"7px 14px",borderRadius:9,fontSize:11,fontFamily:"Syne,sans-serif",fontWeight:700,cursor:"pointer"}}
+                    onClick={exitSelectMode}>✕ Cancel</button>
+                )}
                 <div className="view-toggle">
                   <button className={`vt-btn ${viewMode==="list"?"active":""}`} onClick={()=>setViewMode("list")}>List</button>
                   <button className={`vt-btn ${viewMode==="compare"?"active":""}`} onClick={()=>setViewMode("compare")}>Compare</button>
@@ -1445,15 +1478,38 @@ export default function Flourish() {
                 <button className="add-btn" onClick={()=>{setInputMode("manual");setShowAdd(true);}}>+ Add Task</button>
               </div>
             </div>
+            {selectMode&&viewMode==="list"&&(
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"8px 14px",background:"#FFF0F5",border:`1px solid ${PINK}33`,
+                borderRadius:10,marginBottom:12}}>
+                <span style={{fontSize:12,fontWeight:700,color:PINK}}>{selectedIds.size} selected</span>
+                <div style={{display:"flex",gap:12}}>
+                  <button onClick={selectAll} style={{background:"none",border:"none",color:PINK,fontSize:11,fontWeight:700,cursor:"pointer"}}>Select all ({display.length})</button>
+                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#A090C0",fontSize:11,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
+                </div>
+              </div>
+            )}
             <div className="legend">
               {Object.entries(UC).map(([k,c])=>(
                 <div key={k} className="leg-item"><div className="leg-dot" style={{background:c.dot}}/><span>{c.label}</span></div>
               ))}
             </div>
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect}/>
               :<div className="cmp-grid">{BUCKETS.map(b=><CompareCol key={b.id} bucket={b} tasks={getFiltered(b.id)}/>)}</div>
             }
+            {selectMode&&selectedIds.size>0&&(
+              <div style={{position:"sticky",bottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"12px 18px",background:"#fff",border:`1.5px solid ${PINK}44`,borderRadius:14,
+                boxShadow:`0 4px 20px ${PINK}22`,marginTop:12}}>
+                <span style={{fontSize:13,color:"#A090C0",fontWeight:600}}>{selectedIds.size} task{selectedIds.size!==1?"s":""} selected</span>
+                <button onClick={batchDelete} style={{background:PINK,color:"#fff",border:"none",
+                  padding:"9px 20px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",
+                  display:"flex",alignItems:"center",gap:6,fontFamily:"Syne,sans-serif"}}>
+                  🗑 Delete {selectedIds.size}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1487,14 +1543,41 @@ export default function Flourish() {
                 {activeBucket==="all"?<>All <span>Tasks</span></>:<>{curBucket?.icon} <span>{curBucket?.label}</span></>}
               </div>
               <div className="mob-actions">
+                {!selectMode?(
+                  <button className="mob-view-btn" onClick={()=>{setSelectMode(true);setSelectedIds(new Set());}}>☑ Select</button>
+                ):(
+                  <button className="mob-view-btn active" onClick={exitSelectMode}>✕ Cancel</button>
+                )}
                 <button className={`mob-view-btn ${viewMode==="list"?"active":""}`} onClick={()=>setViewMode("list")}>List</button>
                 <button className={`mob-view-btn ${viewMode==="compare"?"active":""}`} onClick={()=>setViewMode("compare")}>Compare</button>
               </div>
             </div>
+            {selectMode&&viewMode==="list"&&(
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"8px 12px",background:"#FFF0F5",border:`1px solid ${PINK}33`,
+                borderRadius:10,marginBottom:10}}>
+                <span style={{fontSize:11,fontWeight:700,color:PINK}}>{selectedIds.size} selected</span>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={selectAll} style={{background:"none",border:"none",color:PINK,fontSize:10,fontWeight:700,cursor:"pointer"}}>Select all</button>
+                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#A090C0",fontSize:10,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
+                </div>
+              </div>
+            )}
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect}/>
               :<div className="mob-cmp-scroll">{BUCKETS.map(b=><div key={b.id} className="mob-cmp-col cmp-col"><CompareCol bucket={b} tasks={getFiltered(b.id)}/></div>)}</div>
             }
+            {selectMode&&selectedIds.size>0&&(
+              <div style={{position:"sticky",bottom:8,display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"12px 16px",background:"#fff",border:`1.5px solid ${PINK}44`,borderRadius:14,
+                boxShadow:`0 4px 20px ${PINK}22`,marginTop:10}}>
+                <span style={{fontSize:12,color:"#A090C0",fontWeight:600}}>{selectedIds.size} selected</span>
+                <button onClick={batchDelete} style={{background:PINK,color:"#fff",border:"none",
+                  padding:"9px 18px",borderRadius:9,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Syne,sans-serif"}}>
+                  🗑 Delete {selectedIds.size}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1923,8 +2006,8 @@ function useDragSort(items, onReorder) {
   };
 }
 
-function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder }) {
-  const canDrag = activeBucket !== "all";
+function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder, selectMode, selectedIds, onToggleSelect }) {
+  const canDrag = activeBucket !== "all" && !selectMode;
 
   const { displayItems, dragIndex, overIndex, handlers } = useDragSort(
     tasks,
@@ -1958,13 +2041,24 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               transform: isBeingDragged ? "scale(1.02)" : isDropTarget ? "translateY(-3px)" : "none",
               boxShadow: isBeingDragged ? `0 8px 24px ${cfg.border}44` : isDropTarget ? `0 0 0 2px ${cfg.border}` : undefined,
               transition: "transform 0.15s, box-shadow 0.15s, opacity 0.15s",
-              cursor: canDrag ? "grab" : "default",
+              cursor: selectMode ? "pointer" : canDrag ? "grab" : "default",
+              background: selectMode && selectedIds?.has(task.id) ? "#FFF0F5" : undefined,
             }}
             onMouseDown={canDrag ? () => handlers.handleMouseDown(idx) : undefined}
             onMouseEnter={canDrag ? () => handlers.handleMouseEnter(idx) : undefined}
             onTouchStart={canDrag ? (e) => handlers.handleTouchStart(idx, e) : undefined}
+            onClick={selectMode ? () => onToggleSelect(task.id) : undefined}
           >
-            <div className="pri-col">
+            {selectMode ? (
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:32,flexShrink:0}}>
+                <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${selectedIds?.has(task.id)?PINK:"#DDD6F5"}`,
+                  background:selectedIds?.has(task.id)?PINK:"#fff",
+                  display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {selectedIds?.has(task.id)&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}
+                </div>
+              </div>
+            ) : (
+              <div className="pri-col">
               {canDrag ? (
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",
                   color:"#C0B8D8",fontSize:14,cursor:"grab",userSelect:"none"}}>
@@ -1979,6 +2073,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               )}
               {canDrag && <div className="pri-num" style={{color:bucket?.color||PINK,marginTop:2}}>{task.priority}</div>}
             </div>
+            )}
             <div className="task-body">
               <div className="t-title-row">
                 <span className={`t-title ${task.status==="deferred"?"def":""}`}>{task.title}</span>
