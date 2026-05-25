@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 // ── Supabase Client ──
 function getSupaURL() { return import.meta.env.VITE_SUPABASE_URL || ""; }
@@ -1084,6 +1084,21 @@ export default function Flourish() {
 
   function deleteTask(id) { setTasks(p=>p.filter(t=>t.id!==id)); supaDelete(id); setEditTask(null); setEditSuggestion(null); }
 
+  function handleDragReorder(fromIdx, toIdx, currentTasks) {
+    const arr = [...currentTasks];
+    const [moved] = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, moved);
+    // Reassign priorities based on new order
+    const updated = arr.map((t, i) => ({ ...t, priority: i + 1 }));
+    setTasks(prev => {
+      const ids = new Set(updated.map(t => t.id));
+      const others = prev.filter(t => !ids.has(t.id));
+      return [...others, ...updated].sort((a,b) => a.priority - b.priority);
+    });
+    // Save updated priorities to Supabase
+    updated.forEach(t => supaUpdate(t.id, { priority: t.priority }));
+  }
+
   function handleSmartImport(candidates) {
     const base = Math.max(0,...tasks.map(t=>t.id));
     const toAdd = candidates.map((c,i) => {
@@ -1436,7 +1451,7 @@ export default function Flourish() {
               ))}
             </div>
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder}/>
               :<div className="cmp-grid">{BUCKETS.map(b=><CompareCol key={b.id} bucket={b} tasks={getFiltered(b.id)}/>)}</div>
             }
           </div>
@@ -1477,7 +1492,7 @@ export default function Flourish() {
               </div>
             </div>
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder}/>
               :<div className="mob-cmp-scroll">{BUCKETS.map(b=><div key={b.id} className="mob-cmp-col cmp-col"><CompareCol bucket={b} tasks={getFiltered(b.id)}/></div>)}</div>
             }
           </div>
@@ -1819,19 +1834,150 @@ function TimeAllocModal({ tasks, onClose }) {
   );
 }
 
-function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer }) {
+
+// ── Drag to Reorder Hook ──
+function useDragSort(items, onReorder) {
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const longPressTimer = useRef(null);
+  const isDragging = useRef(false);
+
+  function startDrag(index) {
+    isDragging.current = true;
+    setDragIndex(index);
+    setOverIndex(index);
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+
+  function handleMouseDown(index) {
+    longPressTimer.current = setTimeout(() => startDrag(index), 300);
+  }
+
+  function handleMouseUp() {
+    clearTimeout(longPressTimer.current);
+    if (isDragging.current && dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+      onReorder(dragIndex, overIndex);
+    }
+    isDragging.current = false;
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  function handleMouseEnter(index) {
+    if (isDragging.current) setOverIndex(index);
+  }
+
+  function handleTouchStart(index, e) {
+    longPressTimer.current = setTimeout(() => {
+      startDrag(index);
+    }, 300);
+  }
+
+  function handleTouchMove(e) {
+    if (!isDragging.current) {
+      clearTimeout(longPressTimer.current);
+      return;
+    }
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const card = el?.closest('[data-drag-index]');
+    if (card) {
+      const idx = parseInt(card.getAttribute('data-drag-index'));
+      if (!isNaN(idx)) setOverIndex(idx);
+    }
+  }
+
+  function handleTouchEnd() {
+    clearTimeout(longPressTimer.current);
+    if (isDragging.current && dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+      onReorder(dragIndex, overIndex);
+    }
+    isDragging.current = false;
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  // Reordered display list
+  const displayItems = useMemo(() => {
+    if (dragIndex === null || overIndex === null) return items;
+    const arr = [...items];
+    const [moved] = arr.splice(dragIndex, 1);
+    arr.splice(overIndex, 0, moved);
+    return arr;
+  }, [items, dragIndex, overIndex]);
+
+  return {
+    displayItems,
+    dragIndex,
+    overIndex,
+    isDraggingActive: isDragging.current,
+    handlers: {
+      handleMouseDown,
+      handleMouseUp,
+      handleMouseEnter,
+      handleTouchStart,
+      handleTouchMove,
+      handleTouchEnd,
+    }
+  };
+}
+
+function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder }) {
+  const canDrag = activeBucket !== "all";
+
+  const { displayItems, dragIndex, overIndex, handlers } = useDragSort(
+    tasks,
+    (fromIdx, toIdx) => { if (onDragReorder) onDragReorder(fromIdx, toIdx, tasks); }
+  );
+
+  const itemsToRender = canDrag ? displayItems : tasks;
+
   return (
-    <div className="task-list">
-      {tasks.map(task => {
+    <div
+      className="task-list"
+      onMouseUp={canDrag ? handlers.handleMouseUp : undefined}
+      onTouchEnd={canDrag ? handlers.handleTouchEnd : undefined}
+      onTouchMove={canDrag ? handlers.handleTouchMove : undefined}
+      style={{userSelect:"none"}}
+    >
+      {itemsToRender.map((task, idx) => {
         const bucket = BUCKETS.find(b=>b.id===task.bucket);
         const urg = getUrgency(task.dueDate, task.status);
         const cfg = UC[urg];
+        const isBeingDragged = canDrag && dragIndex === idx;
+        const isDropTarget = canDrag && overIndex === idx && dragIndex !== idx;
         return (
-          <div key={task.id} className="task-card" style={{borderLeftColor:cfg.border,borderLeftWidth:3}}>
+          <div
+            key={task.id}
+            data-drag-index={idx}
+            className="task-card"
+            style={{
+              borderLeftColor:cfg.border, borderLeftWidth:3,
+              opacity: isBeingDragged ? 0.5 : 1,
+              transform: isBeingDragged ? "scale(1.02)" : isDropTarget ? "translateY(-3px)" : "none",
+              boxShadow: isBeingDragged ? `0 8px 24px ${cfg.border}44` : isDropTarget ? `0 0 0 2px ${cfg.border}` : undefined,
+              transition: "transform 0.15s, box-shadow 0.15s, opacity 0.15s",
+              cursor: canDrag ? "grab" : "default",
+            }}
+            onMouseDown={canDrag ? () => handlers.handleMouseDown(idx) : undefined}
+            onMouseEnter={canDrag ? () => handlers.handleMouseEnter(idx) : undefined}
+            onTouchStart={canDrag ? (e) => handlers.handleTouchStart(idx, e) : undefined}
+          >
             <div className="pri-col">
-              <button className="arr-btn" onClick={()=>onMove(task.id,-1,activeBucket)}>▲</button>
-              <div className="pri-num" style={{color:bucket?.color||PINK}}>{task.priority}</div>
-              <button className="arr-btn" onClick={()=>onMove(task.id,1,activeBucket)}>▼</button>
+              {canDrag ? (
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",
+                  color:"#C0B8D8",fontSize:14,cursor:"grab",userSelect:"none"}}>
+                  <span>⠿</span>
+                </div>
+              ) : (
+                <>
+                  <button className="arr-btn" onClick={()=>onMove(task.id,-1,activeBucket)}>▲</button>
+                  <div className="pri-num" style={{color:bucket?.color||PINK}}>{task.priority}</div>
+                  <button className="arr-btn" onClick={()=>onMove(task.id,1,activeBucket)}>▼</button>
+                </>
+              )}
+              {canDrag && <div className="pri-num" style={{color:bucket?.color||PINK,marginTop:2}}>{task.priority}</div>}
             </div>
             <div className="task-body">
               <div className="t-title-row">
@@ -1864,6 +2010,11 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
           </div>
         );
       })}
+      {canDrag && tasks.length > 1 && (
+        <div style={{textAlign:"center",fontSize:10,color:"#C0B8D8",fontWeight:600,marginTop:6}}>
+          Hold & drag to reorder
+        </div>
+      )}
     </div>
   );
 }
