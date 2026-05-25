@@ -946,7 +946,12 @@ export default function Flourish() {
   useEffect(() => {
     async function loadTasks() {
       setIsLoadingFromDB(true);
-      const saved = await supaGetTasks();
+      let saved = await supaGetTasks();
+      // Retry once if empty — handles PWA cold start timing issues
+      if (!saved || saved.length === 0) {
+        await new Promise(r => setTimeout(r, 1200));
+        saved = await supaGetTasks();
+      }
       if (saved && saved.length > 0) {
         setTasks(saved);
       } else {
