@@ -931,11 +931,6 @@ export default function Flourish() {
     return false;
   }
 
-  if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
-  if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
-
-  // loading handled inline in render
-
   const [tasks, setTasks]             = useState([]);
   const [isLoadingFromDB, setIsLoadingFromDB]     = useState(true);
   const [budget, setBudget]           = useState(2000);
@@ -1186,6 +1181,20 @@ export default function Flourish() {
   const curBucket = BUCKETS.find(b=>b.id===activeBucket);
   const accent    = curBucket?.color || PINK;
 
+  // Early returns AFTER all hooks
+  if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
+  if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
+  if (isLoadingFromDB) return (
+    <div style={{minHeight:"100vh",background:"#EDE8FA",display:"flex",flexDirection:"column",
+      alignItems:"center",justifyContent:"center",gap:16}}>
+      <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
+        background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
+        WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
+      <div style={{fontSize:40,animation:"pulse 1.2s ease-in-out infinite"}}>🌸</div>
+      <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
+    </div>
+  );
+
   const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
     padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
 
@@ -1368,16 +1377,6 @@ export default function Flourish() {
 
       <div className="app">
         {importSuccess&&<div className="toast">✨ {importSuccess} task{importSuccess!==1?"s":""} imported to Work!</div>}
-        {isLoadingFromDB&&(
-          <div style={{position:"fixed",inset:0,background:"#EDE8FA",display:"flex",flexDirection:"column",
-            alignItems:"center",justifyContent:"center",gap:16,zIndex:999}}>
-            <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
-              background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
-              WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
-            <div style={{fontSize:36}}>🌸</div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
-          </div>
-        )}
 
         {/* HEADER */}
         <div className="hdr">
