@@ -969,6 +969,7 @@ export default function Flourish() {
   const [showTimeAlloc, setShowTimeAlloc] = useState(false);
   const [selectMode, setSelectMode]     = useState(false);
   const [selectedIds, setSelectedIds]   = useState(new Set());
+  const [hideCompleted, setHideCompleted] = useState(false);
   const [showDrive, setShowDrive]     = useState(false);
   const [showImage, setShowImage]     = useState(false);
   const [showPaste, setShowPaste]     = useState(false);
@@ -1018,8 +1019,14 @@ export default function Flourish() {
   }
 
   function getFiltered(bid) {
-    const base = bid==="all" ? tasks : tasks.filter(t=>t.bucket===bid);
-    return [...base].sort((a,b)=>a.priority-b.priority);
+    let base = bid==="all" ? tasks : tasks.filter(t=>t.bucket===bid);
+    if (hideCompleted) base = base.filter(t => t.status !== "completed");
+    return [...base].sort((a,b) => {
+      const aComp = a.status === "completed" ? 1 : 0;
+      const bComp = b.status === "completed" ? 1 : 0;
+      if (aComp !== bComp) return aComp - bComp;
+      return a.priority - b.priority;
+    });
   }
 
   function movePriority(id, dir, bid) {
@@ -1123,6 +1130,15 @@ export default function Flourish() {
     setTasks(p => p.filter(t => !selectedIds.has(t.id)));
     ids.forEach(id => supaDelete(id));
     exitSelectMode();
+  }
+
+  function toggleComplete(id) {
+    setTasks(p => p.map(t => {
+      if (t.id !== id) return t;
+      const done = t.status !== "completed";
+      supaUpdate(id, { status: done ? "completed" : "active" });
+      return { ...t, status: done ? "completed" : "active" };
+    }));
   }
 
   function handleSmartImport(candidates) {
@@ -1489,13 +1505,21 @@ export default function Flourish() {
                 </div>
               </div>
             )}
-            <div className="legend">
-              {Object.entries(UC).map(([k,c])=>(
-                <div key={k} className="leg-item"><div className="leg-dot" style={{background:c.dot}}/><span>{c.label}</span></div>
-              ))}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+              <div className="legend" style={{marginBottom:0}}>
+                {Object.entries(UC).map(([k,c])=>(
+                  <div key={k} className="leg-item"><div className="leg-dot" style={{background:c.dot}}/><span>{c.label}</span></div>
+                ))}
+              </div>
+              <button onClick={()=>setHideCompleted(p=>!p)}
+                style={{background:"none",border:"1px solid #DDD6F5",borderRadius:8,padding:"5px 12px",
+                  fontSize:11,fontWeight:700,cursor:"pointer",color:hideCompleted?"#00A060":"#A090C0",
+                  fontFamily:"Syne,sans-serif",whiteSpace:"nowrap"}}>
+                {hideCompleted?"Show Completed":"Hide Completed"}
+              </button>
             </div>
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
               :<div className="cmp-grid">{BUCKETS.map(b=><CompareCol key={b.id} bucket={b} tasks={getFiltered(b.id)}/>)}</div>
             }
             {selectMode&&selectedIds.size>0&&(
@@ -1564,7 +1588,7 @@ export default function Flourish() {
               </div>
             )}
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect}/>
+              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
               :<div className="mob-cmp-scroll">{BUCKETS.map(b=><div key={b.id} className="mob-cmp-col cmp-col"><CompareCol bucket={b} tasks={getFiltered(b.id)}/></div>)}</div>
             }
             {selectMode&&selectedIds.size>0&&(
@@ -2006,7 +2030,7 @@ function useDragSort(items, onReorder) {
   };
 }
 
-function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder, selectMode, selectedIds, onToggleSelect }) {
+function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder, selectMode, selectedIds, onToggleSelect, onComplete }) {
   const canDrag = activeBucket !== "all" && !selectMode;
 
   const { displayItems, dragIndex, overIndex, handlers } = useDragSort(
@@ -2028,6 +2052,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
         const bucket = BUCKETS.find(b=>b.id===task.bucket);
         const urg = getUrgency(task.dueDate, task.status);
         const cfg = UC[urg];
+        const isCompleted = task.status === "completed";
         const isBeingDragged = canDrag && dragIndex === idx;
         const isDropTarget = canDrag && overIndex === idx && dragIndex !== idx;
         return (
@@ -2037,12 +2062,13 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
             className="task-card"
             style={{
               borderLeftColor:cfg.border, borderLeftWidth:3,
-              opacity: isBeingDragged ? 0.5 : 1,
+              opacity: isBeingDragged ? 0.5 : isCompleted ? 0.6 : 1,
               transform: isBeingDragged ? "scale(1.02)" : isDropTarget ? "translateY(-3px)" : "none",
               boxShadow: isBeingDragged ? `0 8px 24px ${cfg.border}44` : isDropTarget ? `0 0 0 2px ${cfg.border}` : undefined,
               transition: "transform 0.15s, box-shadow 0.15s, opacity 0.15s",
               cursor: selectMode ? "pointer" : canDrag ? "grab" : "default",
-              background: selectMode && selectedIds?.has(task.id) ? "#FFF0F5" : undefined,
+              background: selectMode && selectedIds?.has(task.id) ? "#FFF0F5" : isCompleted ? "#F8FFF8" : undefined,
+              borderLeftColor: isCompleted ? "#00AA66" : cfg.border,
             }}
             onMouseDown={canDrag ? () => handlers.handleMouseDown(idx) : undefined}
             onMouseEnter={canDrag ? () => handlers.handleMouseEnter(idx) : undefined}
@@ -2076,7 +2102,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
             )}
             <div className="task-body">
               <div className="t-title-row">
-                <span className={`t-title ${task.status==="deferred"?"def":""}`}>{task.title}</span>
+                <span className={`t-title ${task.status==="deferred"?"def":""}`} style={{textDecoration:isCompleted?"line-through":"none",color:isCompleted?"#A090C0":undefined}}>{task.title}</span>
                 {activeBucket==="all"&&bucket&&(
                   <span className="bkt-pill" style={{borderColor:bucket.color+"55",color:bucket.color,background:bucket.bg}}>
                     {bucket.icon} {bucket.label}
@@ -2096,11 +2122,16 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               {task.notes&&<div className="t-notes">{task.notes}</div>}
             </div>
             <div className="act-col">
-              <button className="act-btn" onClick={()=>onEdit(task)}>Edit</button>
-              {task.status==="deferred"
+              <button className="act-btn" onClick={()=>onComplete(task.id)}
+                style={{borderColor:isCompleted?"#00AA6644":"#DDD6F5",color:isCompleted?"#00A060":"#A090C0",
+                  background:isCompleted?"#E8F8F0":"none"}}>
+                {isCompleted?"↩ Undo":"✓ Done"}
+              </button>
+              {!isCompleted&&<button className="act-btn" onClick={()=>onEdit(task)}>Edit</button>}
+              {!isCompleted&&(task.status==="deferred"
                 ?<button className="act-btn def-act" onClick={()=>onUndefer(task.id)}>Undefer</button>
                 :<button className="act-btn" onClick={()=>onDefer(task)}>Defer</button>
-              }
+              )}
             </div>
           </div>
         );
