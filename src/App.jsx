@@ -55,7 +55,7 @@ function PinDot({ filled }) {
     <div style={{
       width: 16, height: 16, borderRadius: "50%",
       background: filled ? "#FF2D78" : "transparent",
-      border: `2px solid ${filled ? "#FF2D78" : "#DDD6F5"}`,
+      border: `2px solid ${filled ? "#FF2D78" : "#EBE2D4"}`,
       transition: "all 0.15s",
       boxShadow: filled ? "0 0 8px #FF2D7866" : "none",
     }}/>
@@ -65,8 +65,8 @@ function PinDot({ filled }) {
 function PinKey({ label, sub, onClick, danger }) {
   return (
     <button onClick={onClick} style={{
-      background: danger ? "#FFF0F5" : "#F8F5FF",
-      border: `1px solid ${danger ? "#FF2D7844" : "#DDD6F5"}`,
+      background: danger ? "#FFF0F5" : "#FCF8F2",
+      border: `1px solid ${danger ? "#FF2D7844" : "#EBE2D4"}`,
       borderRadius: 14, padding: "16px 0", cursor: "pointer",
       fontFamily: "Syne, sans-serif", fontWeight: 800,
       fontSize: label === "⌫" ? 22 : 22, color: danger ? "#FF2D78" : "#1E1A2E",
@@ -74,13 +74,13 @@ function PinKey({ label, sub, onClick, danger }) {
       gap: 2, transition: "all 0.12s", lineHeight: 1,
       WebkitTapHighlightColor: "transparent",
     }}
-    onMouseDown={e => { e.currentTarget.style.transform = "scale(0.94)"; e.currentTarget.style.background = danger ? "#FFE0EC" : "#EDE8FA"; }}
-    onMouseUp={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = danger ? "#FFF0F5" : "#F8F5FF"; }}
-    onTouchStart={e => { e.currentTarget.style.transform = "scale(0.94)"; e.currentTarget.style.background = danger ? "#FFE0EC" : "#EDE8FA"; }}
-    onTouchEnd={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = danger ? "#FFF0F5" : "#F8F5FF"; }}
+    onMouseDown={e => { e.currentTarget.style.transform = "scale(0.94)"; e.currentTarget.style.background = danger ? "#FFE0EC" : "#FBF7F2"; }}
+    onMouseUp={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = danger ? "#FFF0F5" : "#FCF8F2"; }}
+    onTouchStart={e => { e.currentTarget.style.transform = "scale(0.94)"; e.currentTarget.style.background = danger ? "#FFE0EC" : "#FBF7F2"; }}
+    onTouchEnd={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.background = danger ? "#FFF0F5" : "#FCF8F2"; }}
     >
       <span>{label}</span>
-      {sub && <span style={{ fontSize: 9, fontFamily: "Plus Jakarta Sans", fontWeight: 600, color: "#B0A8CC", letterSpacing: 1 }}>{sub}</span>}
+      {sub && <span style={{ fontSize: 9, fontFamily: "Plus Jakarta Sans", fontWeight: 600, color: "#B4A88F", letterSpacing: 1 }}>{sub}</span>}
     </button>
   );
 }
@@ -117,14 +117,14 @@ function PinSetup({ onComplete }) {
   function pressBack() { setter(p => p.slice(0, -1)); setError(""); }
 
   if (showRecovery) return (
-    <div style={{ minHeight:"100vh", background:"#EDE8FA", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ background:"#fff", borderRadius:24, padding:32, maxWidth:400, width:"100%", boxShadow:"0 8px 40px #C0B0E020", textAlign:"center" }}>
+    <div style={{ minHeight:"100vh", background:"#FBF7F2", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:24, padding:32, maxWidth:400, width:"100%", boxShadow:"0 8px 40px #CABEA820", textAlign:"center" }}>
         <div style={{ fontSize:40, marginBottom:12 }}>🔐</div>
         <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:20, color:"#1E1A2E", marginBottom:8 }}>Save Your Recovery Code</div>
-        <div style={{ fontSize:13, color:"#A090C0", fontWeight:500, marginBottom:20, lineHeight:1.6 }}>
+        <div style={{ fontSize:13, color:"#9C8C76", fontWeight:500, marginBottom:20, lineHeight:1.6 }}>
           If you ever forget your PIN, use this code to get back in. Screenshot it and keep it somewhere safe — it won't be shown again.
         </div>
-        <div style={{ background:"#F8F5FF", border:"2px dashed #DDD6F5", borderRadius:16, padding:"20px 24px", marginBottom:24 }}>
+        <div style={{ background:"#FCF8F2", border:"2px dashed #EBE2D4", borderRadius:16, padding:"20px 24px", marginBottom:24 }}>
           <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:22, color:"#1E1A2E", letterSpacing:3 }}>{recoveryCode}</div>
         </div>
         <div style={{ background:"#FFF8E0", border:"1px solid #D4A80044", borderRadius:10, padding:"10px 14px", marginBottom:24, fontSize:12, color:"#A07800", fontWeight:600 }}>
@@ -140,8 +140,8 @@ function PinSetup({ onComplete }) {
   );
 
   return (
-    <div style={{ minHeight:"100vh", background:"#EDE8FA", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ background:"#fff", borderRadius:24, padding:"32px 28px", maxWidth:360, width:"100%", boxShadow:"0 8px 40px #C0B0E020" }}>
+    <div style={{ minHeight:"100vh", background:"#FBF7F2", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:24, padding:"32px 28px", maxWidth:360, width:"100%", boxShadow:"0 8px 40px #CABEA820" }}>
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:24,
             background:`linear-gradient(135deg,${PINK},${ORANGE})`, WebkitBackgroundClip:"text",
@@ -149,7 +149,7 @@ function PinSetup({ onComplete }) {
           <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:18, color:"#1E1A2E", marginBottom:6 }}>
             {step === "create" ? "Create Your PIN" : "Confirm Your PIN"}
           </div>
-          <div style={{ fontSize:13, color:"#A090C0", fontWeight:500 }}>
+          <div style={{ fontSize:13, color:"#9C8C76", fontWeight:500 }}>
             {step === "create" ? "Choose a 4-digit PIN to protect your app" : "Enter your PIN again to confirm"}
           </div>
         </div>
@@ -223,16 +223,16 @@ function PinLock({ onUnlock, recoveryCode }) {
   }
 
   if (showRecovery) return (
-    <div style={{ minHeight:"100vh", background:"#EDE8FA", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ background:"#fff", borderRadius:24, padding:32, maxWidth:380, width:"100%", boxShadow:"0 8px 40px #C0B0E020", textAlign:"center" }}>
+    <div style={{ minHeight:"100vh", background:"#FBF7F2", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:24, padding:32, maxWidth:380, width:"100%", boxShadow:"0 8px 40px #CABEA820", textAlign:"center" }}>
         <div style={{ fontSize:36, marginBottom:12 }}>🔑</div>
         <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:18, color:"#1E1A2E", marginBottom:8 }}>Enter Recovery Code</div>
-        <div style={{ fontSize:13, color:"#A090C0", fontWeight:500, marginBottom:20, lineHeight:1.6 }}>
+        <div style={{ fontSize:13, color:"#9C8C76", fontWeight:500, marginBottom:20, lineHeight:1.6 }}>
           Enter the 16-character recovery code you saved when you set up your PIN.
         </div>
         <input value={recoveryInput} onChange={e=>setRecoveryInput(e.target.value.toUpperCase())}
           placeholder="XXXX-XXXX-XXXX-XXXX"
-          style={{ width:"100%", background:"#F8F5FF", border:`1px solid ${recoveryError?PINK:"#DDD6F5"}`,
+          style={{ width:"100%", background:"#FCF8F2", border:`1px solid ${recoveryError?PINK:"#EBE2D4"}`,
             borderRadius:12, padding:"12px 16px", fontFamily:"Syne,sans-serif", fontWeight:700,
             fontSize:16, color:"#1E1A2E", outline:"none", textAlign:"center", letterSpacing:2, marginBottom:8 }}/>
         {recoveryError && <div style={{ color:PINK, fontSize:12, fontWeight:700, marginBottom:12 }}>{recoveryError}</div>}
@@ -241,8 +241,8 @@ function PinLock({ onUnlock, recoveryCode }) {
           fontWeight:800, fontSize:14, cursor:"pointer", width:"100%", marginBottom:12 }}>
           Unlock
         </button>
-        <button onClick={()=>setShowRecovery(false)} style={{ background:"none", border:"1px solid #DDD6F5",
-          color:"#A090C0", padding:"10px 20px", borderRadius:10, cursor:"pointer",
+        <button onClick={()=>setShowRecovery(false)} style={{ background:"none", border:"1px solid #EBE2D4",
+          color:"#9C8C76", padding:"10px 20px", borderRadius:10, cursor:"pointer",
           fontFamily:"Plus Jakarta Sans", fontWeight:600, fontSize:13, width:"100%" }}>
           ← Back to PIN
         </button>
@@ -251,13 +251,13 @@ function PinLock({ onUnlock, recoveryCode }) {
   );
 
   return (
-    <div style={{ minHeight:"100vh", background:"#EDE8FA", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-      <div style={{ background:"#fff", borderRadius:24, padding:"32px 28px", maxWidth:360, width:"100%", boxShadow:"0 8px 40px #C0B0E020" }}>
+    <div style={{ minHeight:"100vh", background:"#FBF7F2", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ background:"#fff", borderRadius:24, padding:"32px 28px", maxWidth:360, width:"100%", boxShadow:"0 8px 40px #CABEA820" }}>
         <div style={{ textAlign:"center", marginBottom:28 }}>
           <div style={{ fontFamily:"Syne,sans-serif", fontWeight:800, fontSize:24,
             background:`linear-gradient(135deg,${PINK},${ORANGE})`, WebkitBackgroundClip:"text",
             WebkitTextFillColor:"transparent", backgroundClip:"text", marginBottom:4 }}>flourish</div>
-          <div style={{ fontSize:13, color:"#A090C0", fontWeight:500 }}>Enter your PIN to continue</div>
+          <div style={{ fontSize:13, color:"#9C8C76", fontWeight:500 }}>Enter your PIN to continue</div>
         </div>
         <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:8,
           animation: shake ? "pinShake 0.4s ease" : "none" }}>
@@ -279,7 +279,7 @@ function PinLock({ onUnlock, recoveryCode }) {
         </div>
         <button onClick={()=>setShowRecovery(true)}
           style={{ display:"block", margin:"20px auto 0", background:"none", border:"none",
-            color:"#C0B8D8", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans" }}>
+            color:"#C6BAA6", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Plus Jakarta Sans" }}>
           Forgot PIN? Use recovery code
         </button>
       </div>
@@ -292,15 +292,15 @@ const PINK   = "#FF2D78";
 const ORANGE = "#FF6B00";
 const YELLOW = "#D4A800";
 const CYAN   = "#0099CC";
-const PURPLE = "#8B5CF6";
+const PURPLE = "#C56B4A";
 const YB     = "#FFE500";
 
 const BUCKETS = [
   { id: "work",     label: "Work",            icon: "💼", color: PINK,   bg: "#FF2D7814" },
-  { id: "family",   label: "Family / Personal",icon: "🏠", color: ORANGE, bg: "#FF6B0014" },
-  { id: "church",   label: "Church",           icon: "✝️",  color: CYAN,   bg: "#0099CC14" },
+  { id: "family",   label: "The Daily",        icon: "🏠", color: ORANGE, bg: "#FF6B0014" },
+  { id: "church",   label: "Faith",            icon: "✝️",  color: CYAN,   bg: "#0099CC14" },
   { id: "me",       label: "Me Time",          icon: "🌟", color: YELLOW, bg: "#D4A80014" },
-  { id: "projects", label: "Projects",         icon: "🎯", color: PURPLE, bg: "#8B5CF614" },
+  { id: "projects", label: "The Extras",       icon: "🎯", color: PURPLE, bg: "#C56B4A14" },
 ];
 
 const BUCKET_KEYWORDS = {
@@ -359,7 +359,7 @@ const UC = {
   soon:     { label: "THIS WEEK", bg: "#D4A80018", border: "#D4A800", text: "#A07800", dot: "#D4A800" },
   upcoming: { label: "UPCOMING",  bg: "#0099CC18", border: "#0099CC", text: "#0077AA", dot: "#0099CC" },
   clear:    { label: "ON TRACK",  bg: "#00AA6618", border: "#00AA66", text: "#008850", dot: "#00AA66" },
-  deferred: { label: "DEFERRED",  bg: "#C8C0E018", border: "#B0A8CC", text: "#9088AA", dot: "#B0A8CC" },
+  deferred: { label: "DEFERRED",  bg: "#CCC0AB18", border: "#B4A88F", text: "#948876", dot: "#B4A88F" },
 };
 
 const SRC = { "manual":"✏️","apple-note":"📱","screenshot":"📸","google-doc":"📄","paste":"📋" };
@@ -394,7 +394,7 @@ function Field({ label, children }) {
   return (
     <div style={{ marginBottom:14 }}>
       <label style={{ display:"block",fontSize:9,fontWeight:700,letterSpacing:"1.5px",
-        textTransform:"uppercase",color:"#B0A0CC",marginBottom:6 }}>{label}</label>
+        textTransform:"uppercase",color:"#B7AA92",marginBottom:6 }}>{label}</label>
       {children}
     </div>
   );
@@ -413,7 +413,7 @@ function BucketSuggestion({ suggestion, current, onAccept, onDismiss }) {
       <div style={{ flex:1 }}>
         <span style={{ fontSize:11,fontWeight:700,color:"#1E1A2E" }}>Suggested: </span>
         <span style={{ fontSize:11,fontWeight:800,color:b.color }}>{b.label}</span>
-        <span style={{ fontSize:11,color:"#A090C0",fontWeight:500 }}> — does this look right?</span>
+        <span style={{ fontSize:11,color:"#9C8C76",fontWeight:500 }}> — does this look right?</span>
       </div>
       <button onClick={onAccept} style={{ background:b.color,color:"#fff",border:"none",
         padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:800,cursor:"pointer" }}>
@@ -438,8 +438,8 @@ function ReviewList({ candidates, setCandidates, inputSty }) {
       {candidates.map(c=>{
         return (
           <div key={c._id} style={{
-            background:c.action==="skip"?"#F8F5FF":c.isDup?"#FFFBF0":"#F8FFF8",
-            border:`1px solid ${c.action==="skip"?"#DDD6F5":c.isDup?"#D4A80055":"#00AA6633"}`,
+            background:c.action==="skip"?"#FCF8F2":c.isDup?"#FFFBF0":"#F8FFF8",
+            border:`1px solid ${c.action==="skip"?"#EBE2D4":c.isDup?"#D4A80055":"#00AA6633"}`,
             borderRadius:12,padding:"12px 14px",opacity:c.action==="skip"?0.5:1,transition:"all 0.2s"
           }}>
             <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
@@ -453,33 +453,33 @@ function ReviewList({ candidates, setCandidates, inputSty }) {
             </div>
             <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
               <div style={{flex:2,minWidth:110}}>
-                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Bucket</div>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C6BAA6",marginBottom:3}}>Bucket</div>
                 <select value={c.bucket} onChange={e=>updateBucket(c._id,e.target.value)}
                   style={{...inputSty,padding:"6px 10px",fontSize:11}}>
                   {BUCKETS.map(bk=><option key={bk.id} value={bk.id}>{bk.icon} {bk.label}</option>)}
                 </select>
               </div>
               <div style={{flex:2,minWidth:110}}>
-                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Due Date</div>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C6BAA6",marginBottom:3}}>Due Date</div>
                 <input type="date" value={c.dueDate} onChange={e=>updateField(c._id,"dueDate",e.target.value)}
                   style={{...inputSty,padding:"6px 10px",fontSize:11}}/>
               </div>
               <div style={{flex:1,minWidth:80}}>
-                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Cost ($)</div>
+                <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C6BAA6",marginBottom:3}}>Cost ($)</div>
                 <input type="number" placeholder="0.00" value={c.cost} onChange={e=>updateField(c._id,"cost",e.target.value)}
                   style={{...inputSty,padding:"6px 10px",fontSize:11}}/>
               </div>
             </div>
-            {c.notes&&<div style={{fontSize:11,color:"#B0A8CC",fontStyle:"italic",marginBottom:8}}>{c.notes}</div>}
+            {c.notes&&<div style={{fontSize:11,color:"#B4A88F",fontStyle:"italic",marginBottom:8}}>{c.notes}</div>}
             <div style={{display:"flex",gap:6}}>
               <button onClick={()=>toggleAction(c._id,"add")}
                 style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
-                  borderColor:c.action==="add"?"#00AA66":"#DDD6F5",background:c.action==="add"?"#E8F8F0":"transparent",
-                  color:c.action==="add"?"#00A060":"#A090C0"}}>Add</button>
+                  borderColor:c.action==="add"?"#00AA66":"#EBE2D4",background:c.action==="add"?"#E8F8F0":"transparent",
+                  color:c.action==="add"?"#00A060":"#9C8C76"}}>Add</button>
               <button onClick={()=>toggleAction(c._id,"skip")}
                 style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
-                  borderColor:c.action==="skip"?"#B0A8CC":"#DDD6F5",background:c.action==="skip"?"#F0ECF8":"transparent",
-                  color:"#A090C0"}}>Skip</button>
+                  borderColor:c.action==="skip"?"#B4A88F":"#EBE2D4",background:c.action==="skip"?"#F6F0E7":"transparent",
+                  color:"#9C8C76"}}>Skip</button>
             </div>
           </div>
         );
@@ -496,7 +496,7 @@ function ImageImport({ existingTasks, onConfirm, onClose }) {
   const [preview, setPreview] = useState(null);
   const fileRef = useRef(null);
   const PINK = "#FF2D78";
-  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+  const inputSty = { width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:10,
     padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
 
   async function handleFile(file) {
@@ -546,17 +546,17 @@ function ImageImport({ existingTasks, onConfirm, onClose }) {
         {step==="idle"&&(
           <>
             <div className="modal-title">Import from <span>Screenshot</span></div>
-            <div style={{background:"#F8F5FF",border:"2px dashed #DDD6F5",borderRadius:16,
+            <div style={{background:"#FCF8F2",border:"2px dashed #EBE2D4",borderRadius:16,
               padding:"32px 24px",textAlign:"center",marginBottom:20,cursor:"pointer"}}
               onClick={()=>fileRef.current?.click()}
               onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor="#FF2D78";}}
-              onDragLeave={e=>{e.currentTarget.style.borderColor="#DDD6F5";}}
-              onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor="#DDD6F5";handleFile(e.dataTransfer.files[0]);}}>
+              onDragLeave={e=>{e.currentTarget.style.borderColor="#EBE2D4";}}
+              onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor="#EBE2D4";handleFile(e.dataTransfer.files[0]);}}>
               <div style={{fontSize:48,marginBottom:12}}>📸</div>
               <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:16,color:"#1E1A2E",marginBottom:6}}>
                 Drop an image or tap to choose
               </div>
-              <div style={{fontSize:12,color:"#A090C0",fontWeight:500,lineHeight:1.6}}>
+              <div style={{fontSize:12,color:"#9C8C76",fontWeight:500,lineHeight:1.6}}>
                 Handwritten notes · Apple Notes · Microsoft Notes<br/>
                 Emails · Text messages · Spreadsheets · Any document
               </div>
@@ -574,16 +574,16 @@ function ImageImport({ existingTasks, onConfirm, onClose }) {
             {preview&&<img src={preview} alt="preview" style={{maxHeight:160,borderRadius:12,marginBottom:20,objectFit:"contain"}}/>}
             <div style={{fontSize:36,marginBottom:12,animation:"pulse 1s infinite",display:"inline-block"}}>✨</div>
             <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>Reading your image...</div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Extracting tasks, dates, and costs</div>
+            <div style={{fontSize:13,color:"#9C8C76",fontWeight:500}}>Extracting tasks, dates, and costs</div>
           </div>
         )}
         {step==="review"&&(
           <>
             <div className="modal-title">Review <span>Tasks</span></div>
-            {preview&&<img src={preview} alt="source" style={{width:"100%",maxHeight:120,objectFit:"contain",borderRadius:10,marginBottom:14,background:"#F8F5FF"}}/>}
+            {preview&&<img src={preview} alt="source" style={{width:"100%",maxHeight:120,objectFit:"contain",borderRadius:10,marginBottom:14,background:"#FCF8F2"}}/>}
             <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
               <span style={{background:"#E8F8F0",color:"#00A060",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{addCount} to add</span>
-              <span style={{background:"#F0ECF8",color:"#A090C0",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
+              <span style={{background:"#F6F0E7",color:"#9C8C76",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
             </div>
             <ReviewList candidates={candidates} setCandidates={setCandidates} inputSty={inputSty}/>
             <div className="modal-btns">
@@ -608,7 +608,7 @@ function PasteImport({ existingTasks, onConfirm, onClose }) {
   const [candidates, setCandidates] = useState([]);
   const [error, setError] = useState(null);
   const PINK = "#FF2D78";
-  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+  const inputSty = { width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:10,
     padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
 
   async function extractTasks() {
@@ -644,7 +644,7 @@ function PasteImport({ existingTasks, onConfirm, onClose }) {
         {step==="idle"&&(
           <>
             <div className="modal-title">Paste Your <span>Notes</span></div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500,marginBottom:14,lineHeight:1.6}}>
+            <div style={{fontSize:13,color:"#9C8C76",fontWeight:500,marginBottom:14,lineHeight:1.6}}>
               Paste anything — bullet points, numbered list, random notes. The AI will find every task.
             </div>
             <textarea value={text} onChange={e=>setText(e.target.value)}
@@ -662,7 +662,7 @@ function PasteImport({ existingTasks, onConfirm, onClose }) {
           <div style={{textAlign:"center",padding:"32px 0"}}>
             <div style={{fontSize:36,marginBottom:12,animation:"pulse 1s infinite",display:"inline-block"}}>✨</div>
             <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>Reading your notes...</div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Extracting tasks and suggestions</div>
+            <div style={{fontSize:13,color:"#9C8C76",fontWeight:500}}>Extracting tasks and suggestions</div>
           </div>
         )}
         {step==="review"&&(
@@ -670,7 +670,7 @@ function PasteImport({ existingTasks, onConfirm, onClose }) {
             <div className="modal-title">Review <span>Tasks</span></div>
             <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
               <span style={{background:"#E8F8F0",color:"#00A060",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{addCount} to add</span>
-              <span style={{background:"#F0ECF8",color:"#A090C0",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
+              <span style={{background:"#F6F0E7",color:"#9C8C76",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>{candidates.length} found</span>
             </div>
             <ReviewList candidates={candidates} setCandidates={setCandidates} inputSty={inputSty}/>
             <div className="modal-btns">
@@ -696,7 +696,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [candidates, setCandidates] = useState([]);
 
-  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+  const inputSty = { width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:10,
     padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
 
   async function searchFiles() {
@@ -768,7 +768,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
             <div style={{background:"#F0F8FF",border:"1px solid #0099CC33",borderRadius:14,padding:"18px 20px",marginBottom:16}}>
               <div style={{fontSize:12,fontWeight:700,color:"#1E1A2E",marginBottom:4}}>📁 Folder:</div>
               <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:CYAN}}>RWRLRR</div>
-              <div style={{fontSize:12,color:"#A090C0",marginTop:4,fontWeight:500}}>Files with "checklist" or "action plan" in the name</div>
+              <div style={{fontSize:12,color:"#9C8C76",marginTop:4,fontWeight:500}}>Files with "checklist" or "action plan" in the name</div>
             </div>
             <div style={{background:"#FFF8F0",border:"1px solid #FF6B0033",borderRadius:12,padding:"12px 16px",marginBottom:20,fontSize:12,color:"#A07800",fontWeight:600}}>
               💼 All RWRLRR tasks import into <strong>Work</strong> automatically
@@ -784,7 +784,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
           <div style={{textAlign:"center",padding:"32px 0"}}>
             <div style={{fontSize:40,marginBottom:16,display:"inline-block",animation:"spin 1.5s linear infinite"}}>🔍</div>
             <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>Searching RWRLRR...</div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Looking for checklists and action plans</div>
+            <div style={{fontSize:13,color:"#9C8C76",fontWeight:500}}>Looking for checklists and action plans</div>
           </div>
         )}
 
@@ -795,20 +795,20 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
               <div style={{textAlign:"center",padding:"24px 0"}}>
                 <div style={{fontSize:32,marginBottom:12}}>📂</div>
                 <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:16,color:"#1E1A2E",marginBottom:6}}>No files found</div>
-                <div style={{fontSize:12,color:"#A090C0",fontWeight:500}}>No files with "checklist" or "action plan" found in RWRLRR.</div>
+                <div style={{fontSize:12,color:"#9C8C76",fontWeight:500}}>No files with "checklist" or "action plan" found in RWRLRR.</div>
               </div>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
                 {files.map(f=>(
                   <button key={f.id} onClick={()=>extractFromFile(f)}
                     style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,
-                      border:"1px solid #DDD6F5",background:"#F8F5FF",cursor:"pointer",textAlign:"left",width:"100%",transition:"all 0.18s"}}
+                      border:"1px solid #EBE2D4",background:"#FCF8F2",cursor:"pointer",textAlign:"left",width:"100%",transition:"all 0.18s"}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=CYAN;e.currentTarget.style.background="#F0FAFF";}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor="#DDD6F5";e.currentTarget.style.background="#F8F5FF";}}>
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor="#EBE2D4";e.currentTarget.style.background="#FCF8F2";}}>
                     <span style={{fontSize:26}}>{f.mimeType?.includes("spreadsheet")?"📊":"📄"}</span>
                     <div>
                       <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:14,color:"#1E1A2E"}}>{f.name}</div>
-                      <div style={{fontSize:11,color:"#A090C0",marginTop:2,fontWeight:500}}>
+                      <div style={{fontSize:11,color:"#9C8C76",marginTop:2,fontWeight:500}}>
                         {f.mimeType?.includes("spreadsheet")?"Google Sheet":"Google Doc"} · Tap to extract tasks
                       </div>
                     </div>
@@ -830,7 +830,7 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
             <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:18,color:"#1E1A2E",marginBottom:8}}>
               Reading {selectedFile?.name}...
             </div>
-            <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Extracting tasks, dates, and costs</div>
+            <div style={{fontSize:13,color:"#9C8C76",fontWeight:500}}>Extracting tasks, dates, and costs</div>
           </div>
         )}
 
@@ -840,15 +840,15 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
             <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
               <span style={{background:"#E8F8F0",color:"#00A060",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>✓ {addCount} to add</span>
               {flagCount>0&&<span style={{background:"#FFF8E0",color:"#A07800",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>⚑ {flagCount} possible duplicates</span>}
-              {skipCount>0&&<span style={{background:"#F0ECF8",color:"#A090C0",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>✕ {skipCount} skipped</span>}
+              {skipCount>0&&<span style={{background:"#F6F0E7",color:"#9C8C76",padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>✕ {skipCount} skipped</span>}
               <span style={{background:"#FF2D7814",color:PINK,padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700}}>💼 All → Work</span>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10,maxHeight:360,overflowY:"auto",marginBottom:16}}>
               {candidates.map(c=>{
                 const b = BUCKETS.find(x=>x.id===c.bucket);
                 return (
-                  <div key={c._id} style={{background:c.action==="skip"?"#F8F5FF":c.isDup?"#FFFBF0":"#F8FFF8",
-                    border:`1px solid ${c.action==="skip"?"#DDD6F5":c.isDup?"#D4A80055":"#00AA6633"}`,
+                  <div key={c._id} style={{background:c.action==="skip"?"#FCF8F2":c.isDup?"#FFFBF0":"#F8FFF8",
+                    border:`1px solid ${c.action==="skip"?"#EBE2D4":c.isDup?"#D4A80055":"#00AA6633"}`,
                     borderRadius:12,padding:"12px 14px",opacity:c.action==="skip"?0.5:1,transition:"all 0.2s"}}>
                     <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
                       <input value={c.title} onChange={e=>updateField(c._id,"title",e.target.value)}
@@ -865,26 +865,26 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
                     </div>
                     <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                       <div style={{flex:1,minWidth:110}}>
-                        <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Due Date</div>
+                        <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C6BAA6",marginBottom:3}}>Due Date</div>
                         <input type="date" value={c.dueDate} onChange={e=>updateField(c._id,"dueDate",e.target.value)}
-                          style={{width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:8,padding:"6px 10px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans",fontSize:11,outline:"none"}}/>
+                          style={{width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:8,padding:"6px 10px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans",fontSize:11,outline:"none"}}/>
                       </div>
                       <div style={{flex:1,minWidth:80}}>
-                        <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C0B8D8",marginBottom:3}}>Cost ($)</div>
+                        <div style={{fontSize:8,fontWeight:700,letterSpacing:"1px",textTransform:"uppercase",color:"#C6BAA6",marginBottom:3}}>Cost ($)</div>
                         <input type="number" placeholder="0.00" value={c.cost} onChange={e=>updateField(c._id,"cost",e.target.value)}
-                          style={{width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:8,padding:"6px 10px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans",fontSize:11,outline:"none"}}/>
+                          style={{width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:8,padding:"6px 10px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans",fontSize:11,outline:"none"}}/>
                       </div>
                     </div>
-                    {c.notes&&<div style={{fontSize:11,color:"#B0A8CC",fontStyle:"italic",marginBottom:8}}>{c.notes}</div>}
+                    {c.notes&&<div style={{fontSize:11,color:"#B4A88F",fontStyle:"italic",marginBottom:8}}>{c.notes}</div>}
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>toggleAction(c._id,"add")}
                         style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
-                          borderColor:c.action==="add"?"#00AA66":"#DDD6F5",background:c.action==="add"?"#E8F8F0":"transparent",
-                          color:c.action==="add"?"#00A060":"#A090C0"}}>✓ Add</button>
+                          borderColor:c.action==="add"?"#00AA66":"#EBE2D4",background:c.action==="add"?"#E8F8F0":"transparent",
+                          color:c.action==="add"?"#00A060":"#9C8C76"}}>✓ Add</button>
                       <button onClick={()=>toggleAction(c._id,"skip")}
                         style={{padding:"4px 12px",borderRadius:6,border:"1px solid",cursor:"pointer",fontSize:11,fontWeight:700,
-                          borderColor:c.action==="skip"?"#B0A8CC":"#DDD6F5",background:c.action==="skip"?"#F0ECF8":"transparent",
-                          color:"#A090C0"}}>✕ Skip</button>
+                          borderColor:c.action==="skip"?"#B4A88F":"#EBE2D4",background:c.action==="skip"?"#F6F0E7":"transparent",
+                          color:"#9C8C76"}}>✕ Skip</button>
                     </div>
                   </div>
                 );
@@ -1185,17 +1185,17 @@ export default function Flourish() {
   if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
   if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
   if (isLoadingFromDB) return (
-    <div style={{minHeight:"100vh",background:"#EDE8FA",display:"flex",flexDirection:"column",
+    <div style={{minHeight:"100vh",background:"#FBF7F2",display:"flex",flexDirection:"column",
       alignItems:"center",justifyContent:"center",gap:16}}>
       <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:28,
         background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",
         WebkitTextFillColor:"transparent",backgroundClip:"text"}}>flourish</div>
       <div style={{fontSize:40,animation:"pulse 1.2s ease-in-out infinite"}}>🌸</div>
-      <div style={{fontSize:13,color:"#A090C0",fontWeight:500}}>Loading your tasks...</div>
+      <div style={{fontSize:13,color:"#9C8C76",fontWeight:500}}>Loading your tasks...</div>
     </div>
   );
 
-  const inputSty = { width:"100%",background:"#F8F5FF",border:"1px solid #DDD6F5",borderRadius:10,
+  const inputSty = { width:"100%",background:"#FCF8F2",border:"1px solid #EBE2D4",borderRadius:10,
     padding:"10px 13px",color:"#1E1A2E",fontFamily:"Plus Jakarta Sans,sans-serif",fontSize:13,fontWeight:500,outline:"none" };
 
   return (
@@ -1203,8 +1203,8 @@ export default function Flourish() {
       <style>{`
         ${FONTS}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        html,body{height:100%;background:#EDE8FA;}
-        .app{min-height:100vh;background:#EDE8FA;font-family:'Plus Jakarta Sans',sans-serif;color:#1E1A2E;}
+        html,body{height:100%;background:#FBF7F2;}
+        .app{min-height:100vh;background:#FBF7F2;font-family:'Plus Jakarta Sans',sans-serif;color:#1E1A2E;}
         @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
         @keyframes slideDown{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -1213,70 +1213,70 @@ export default function Flourish() {
           background:linear-gradient(135deg,${PINK},${ORANGE});color:#fff;
           padding:12px 24px;border-radius:40px;font-family:'Syne',sans-serif;
           font-weight:800;font-size:14px;z-index:200;box-shadow:0 8px 24px ${PINK}44;animation:slideDown 0.3s ease;}
-        .hdr{background:#fff;border-bottom:1px solid #DDD6F5;padding:0 24px;display:flex;
+        .hdr{background:#fff;border-bottom:1px solid #EBE2D4;padding:0 24px;display:flex;
           align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;
-          box-shadow:0 2px 12px #C8B8F015;position:relative;}
+          box-shadow:0 2px 12px #CFC2AC15;position:relative;}
         .hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
           background:linear-gradient(90deg,${PINK},${ORANGE},${YB},${CYAN},${PURPLE},${PINK});
           background-size:200%;animation:gs 5s linear infinite;}
         .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-1px;
           background:linear-gradient(135deg,${PINK},${ORANGE});-webkit-background-clip:text;
           -webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
-        .logo-sub{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#B8B0D8;}
+        .logo-sub{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#BDB19A;}
         .hdr-stats{display:flex;gap:20px;align-items:center;}
         .hdr-stat{display:flex;flex-direction:column;align-items:flex-end;}
-        .hdr-stat-label{color:#C0B8D8;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+        .hdr-stat-label{color:#C6BAA6;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
         .hdr-stat-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;}
         .budget-tap{cursor:pointer;border-bottom:1.5px dashed ${PINK}88;}
         .desktop-layout{display:grid;grid-template-columns:256px 1fr;height:calc(100vh - 60px);}
-        .sidebar{background:#F5F0FF;border-right:1px solid #DDD6F5;padding:20px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:22px;}
-        .sec-label{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#C0B8DC;margin-bottom:9px;}
+        .sidebar{background:#F7F1E8;border-right:1px solid #EBE2D4;padding:20px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:22px;}
+        .sec-label{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#C6BAA6;margin-bottom:9px;}
         .bucket-nav{display:flex;flex-direction:column;gap:4px;}
         .bkt-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid transparent;
           cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;
-          background:transparent;color:#A090C0;transition:all 0.18s;text-align:left;width:100%;}
-        .bkt-btn:hover{background:#EDE8FA;color:#5A4A7A;border-color:#DDD6F5;}
+          background:transparent;color:#9C8C76;transition:all 0.18s;text-align:left;width:100%;}
+        .bkt-btn:hover{background:#FBF7F2;color:#6A5942;border-color:#EBE2D4;}
         .bkt-btn.active{border-color:var(--bc);background:var(--bbg);color:var(--bc);box-shadow:0 2px 10px var(--bc)22;}
         .bkt-icon{font-size:16px;width:20px;text-align:center;}
         .bkt-count{margin-left:auto;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;}
-        .bar-bg{height:7px;background:#DDD6F5;border-radius:4px;overflow:hidden;margin:7px 0;}
+        .bar-bg{height:7px;background:#EBE2D4;border-radius:4px;overflow:hidden;margin:7px 0;}
         .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,${PINK},${ORANGE});transition:width 0.5s;}
-        .bar-row{display:flex;justify-content:space-between;font-size:10px;color:#A090C0;font-weight:600;}
+        .bar-row{display:flex;justify-content:space-between;font-size:10px;color:#9C8C76;font-weight:600;}
         .imp-list{display:flex;flex-direction:column;gap:5px;}
-        .imp-btn{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:9px;border:1px solid #DDD6F5;
-          background:#fff;cursor:pointer;font-size:12px;color:#9080B8;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all 0.18s;}
+        .imp-btn{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:9px;border:1px solid #EBE2D4;
+          background:#fff;cursor:pointer;font-size:12px;color:#8E7F66;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all 0.18s;}
         .imp-btn:hover{border-color:${PINK}88;color:${PINK};background:#FFF0F5;}
         .imp-btn.drive{border-color:#0099CC44;color:${CYAN};background:#F0FAFF;}
         .imp-btn.drive:hover{border-color:${CYAN};background:#E0F5FF;}
         .urg-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
-        .main-area{padding:24px 28px;overflow-y:auto;background:#EDE8FA;}
+        .main-area{padding:24px 28px;overflow-y:auto;background:#FBF7F2;}
         .mobile-layout{display:none;flex-direction:column;height:calc(100vh - 60px);}
-        .mob-bucket-strip{background:#fff;border-bottom:1px solid #EDE8FA;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+        .mob-bucket-strip{background:#fff;border-bottom:1px solid #FBF7F2;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
         .mob-bucket-strip::-webkit-scrollbar{display:none;}
-        .mob-bkt{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid #DDD6F5;
-          background:#F8F5FF;cursor:pointer;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;
-          color:#A090C0;white-space:nowrap;transition:all 0.18s;flex-shrink:0;}
+        .mob-bkt{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid #EBE2D4;
+          background:#FCF8F2;cursor:pointer;font-size:12px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;
+          color:#9C8C76;white-space:nowrap;transition:all 0.18s;flex-shrink:0;}
         .mob-bkt.active{border-color:var(--bc);background:var(--bbg);color:var(--bc);}
-        .mob-stats{background:#fff;border-bottom:1px solid #EDE8FA;padding:10px 16px;display:flex;flex-shrink:0;}
+        .mob-stats{background:#fff;border-bottom:1px solid #FBF7F2;padding:10px 16px;display:flex;flex-shrink:0;}
         .mob-stat{flex:1;display:flex;flex-direction:column;align-items:center;}
-        .mob-stat+.mob-stat{border-left:1px solid #EDE8FA;}
-        .mob-stat-label{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#C0B8D8;}
+        .mob-stat+.mob-stat{border-left:1px solid #FBF7F2;}
+        .mob-stat-label{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#C6BAA6;}
         .mob-stat-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;margin-top:1px;}
-        .mob-main{flex:1;overflow-y:auto;padding:14px 14px 100px;background:#EDE8FA;}
+        .mob-main{flex:1;overflow-y:auto;padding:14px 14px 100px;background:#FBF7F2;}
         .mob-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
         .mob-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#1E1A2E;}
         .mob-title span{color:var(--ac,${PINK});}
         .mob-actions{display:flex;gap:8px;}
-        .mob-view-btn{background:#fff;border:1px solid #DDD6F5;color:#A090C0;padding:7px 12px;border-radius:8px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;}
-        .mob-view-btn.active{background:#EDE8FA;color:${PINK};border-color:${PINK}44;}
-        .mob-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #DDD6F5;
+        .mob-view-btn{background:#fff;border:1px solid #EBE2D4;color:#9C8C76;padding:7px 12px;border-radius:8px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;}
+        .mob-view-btn.active{background:#FBF7F2;color:${PINK};border-color:${PINK}44;}
+        .mob-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #EBE2D4;
           display:none;justify-content:space-around;align-items:center;
-          padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:60;box-shadow:0 -4px 20px #C0B0E015;}
+          padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:60;box-shadow:0 -4px 20px #CABEA815;}
         .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;
           padding:4px 6px;border-radius:10px;transition:all 0.15s;min-width:40px;}
-        .mob-nav-item.active{background:#EDE8FA;}
+        .mob-nav-item.active{background:#FBF7F2;}
         .mob-nav-icon{font-size:18px;line-height:1;}
-        .mob-nav-label{font-size:8px;font-weight:700;color:#B0A8CC;letter-spacing:0.5px;text-transform:uppercase;}
+        .mob-nav-label{font-size:8px;font-weight:700;color:#B4A88F;letter-spacing:0.5px;text-transform:uppercase;}
         .mob-nav-item.active .mob-nav-label{color:${PINK};}
         .fab{position:fixed;bottom:max(76px,calc(60px + env(safe-area-inset-bottom)));right:18px;
           width:54px;height:54px;border-radius:27px;background:linear-gradient(135deg,${PINK},${ORANGE});
@@ -1287,81 +1287,81 @@ export default function Flourish() {
         .main-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#1E1A2E;}
         .main-title span{color:var(--ac,${PINK});}
         .hdr-right{display:flex;gap:8px;align-items:center;}
-        .view-toggle{display:flex;background:#fff;border:1px solid #DDD6F5;border-radius:9px;overflow:hidden;}
-        .vt-btn{padding:7px 14px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;background:none;border:none;color:#B0A0D0;cursor:pointer;transition:all 0.18s;}
-        .vt-btn.active{background:#EDE8FA;color:${PINK};}
+        .view-toggle{display:flex;background:#fff;border:1px solid #EBE2D4;border-radius:9px;overflow:hidden;}
+        .vt-btn{padding:7px 14px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;background:none;border:none;color:#B7AA92;cursor:pointer;transition:all 0.18s;}
+        .vt-btn.active{background:#FBF7F2;color:${PINK};}
         .add-btn{background:linear-gradient(135deg,${PINK},${ORANGE});color:#fff;border:none;padding:9px 18px;
           border-radius:9px;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;cursor:pointer;
           box-shadow:0 3px 14px ${PINK}44;transition:all 0.18s;}
         .add-btn:hover{transform:translateY(-1px);box-shadow:0 5px 20px ${PINK}55;}
         .legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
-        .leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#A090C0;font-weight:600;}
+        .leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#9C8C76;font-weight:600;}
         .leg-dot{width:7px;height:7px;border-radius:50%;}
         .task-list{display:flex;flex-direction:column;gap:9px;}
-        .task-card{background:#fff;border:1px solid #DDD6F5;border-radius:13px;padding:13px 16px;
+        .task-card{background:#fff;border:1px solid #EBE2D4;border-radius:13px;padding:13px 16px;
           display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:start;
-          transition:all 0.18s;box-shadow:0 2px 8px #C0B0E010;}
-        .task-card:hover{border-color:#C8B8F0;transform:translateY(-1px);box-shadow:0 5px 18px #C0B0E020;}
+          transition:all 0.18s;box-shadow:0 2px 8px #CABEA810;}
+        .task-card:hover{border-color:#CFC2AC;transform:translateY(-1px);box-shadow:0 5px 18px #CABEA820;}
         .pri-col{display:flex;flex-direction:column;align-items:center;gap:3px;padding-top:2px;}
         .pri-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;line-height:1;}
-        .arr-btn{background:none;border:none;color:#D0C8E8;cursor:pointer;font-size:10px;padding:1px;transition:color 0.15s;}
+        .arr-btn{background:none;border:none;color:#D3C8B4;cursor:pointer;font-size:10px;padding:1px;transition:color 0.15s;}
         .arr-btn:hover{color:${PINK};}
         .task-body{min-width:0;}
         .t-title-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
         .t-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#1E1A2E;}
-        .t-title.def{color:#C0B8D8;text-decoration:line-through;}
+        .t-title.def{color:#C6BAA6;text-decoration:line-through;}
         .bkt-pill{font-size:8px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:4px;border:1px solid;text-transform:uppercase;}
         .urg-badge{font-size:8px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:4px;border:1px solid;}
-        .src-badge{font-size:11px;color:#C0B8D8;}
-        .t-meta{display:flex;gap:8px;font-size:10px;color:#A090C0;flex-wrap:wrap;align-items:center;font-weight:600;}
-        .cost-badge{background:#F0ECF8;color:#A090C0;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;}
+        .src-badge{font-size:11px;color:#C6BAA6;}
+        .t-meta{display:flex;gap:8px;font-size:10px;color:#9C8C76;flex-wrap:wrap;align-items:center;font-weight:600;}
+        .cost-badge{background:#F6F0E7;color:#9C8C76;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;}
         .cost-badge.fits{color:#00A060;background:#E8F8F0;}
         .cost-badge.defer{color:${ORANGE};background:#FFF3E8;}
         .cost-badge.flagged{color:#A07800;background:#FFF8E0;border:1px solid #D4A80044;}
-        .t-notes{font-size:10px;color:#B0A8CC;margin-top:4px;font-style:italic;}
+        .t-notes{font-size:10px;color:#B4A88F;margin-top:4px;font-style:italic;}
         .act-col{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
-        .act-btn{background:none;border:1px solid #DDD6F5;color:#A090C0;padding:4px 9px;border-radius:6px;
+        .act-btn{background:none;border:1px solid #EBE2D4;color:#9C8C76;padding:4px 9px;border-radius:6px;
           font-size:10px;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:600;}
         .act-btn:hover{border-color:${PINK}88;color:${PINK};background:#FFF0F5;}
         .act-btn.def-act{border-color:${ORANGE}55;color:${ORANGE};background:#FFF3E8;}
         .cmp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;}
-        .cmp-col{background:#fff;border:1px solid #DDD6F5;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #C0B0E010;}
-        .cmp-hdr{padding:11px 13px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #EDE8FA;position:relative;}
+        .cmp-col{background:#fff;border:1px solid #EBE2D4;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #CABEA810;}
+        .cmp-hdr{padding:11px 13px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #FBF7F2;position:relative;}
         .cmp-hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--bc);opacity:0.5;}
         .cmp-hdr-icon{font-size:14px;}
         .cmp-hdr-title{font-family:'Syne',sans-serif;font-weight:800;font-size:11px;}
-        .cmp-hdr-count{margin-left:auto;font-size:10px;color:#C0B8D8;font-weight:700;}
+        .cmp-hdr-count{margin-left:auto;font-size:10px;color:#C6BAA6;font-weight:700;}
         .cmp-list{padding:8px;display:flex;flex-direction:column;gap:7px;}
-        .cmp-task{padding:9px 11px;border-radius:9px;border:1px solid;background:#FDFCFF;}
+        .cmp-task{padding:9px 11px;border-radius:9px;border:1px solid;background:#FFFDF9;}
         .cmp-task-hdr{display:flex;gap:5px;margin-bottom:4px;}
         .cmp-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;flex-shrink:0;}
-        .cmp-ttitle{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#2E2840;line-height:1.3;}
-        .cmp-ttitle.def{color:#C0B8D8;text-decoration:line-through;}
-        .cmp-meta{font-size:9px;color:#B0A8C8;display:flex;gap:6px;flex-wrap:wrap;font-weight:600;}
+        .cmp-ttitle{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#332C20;line-height:1.3;}
+        .cmp-ttitle.def{color:#C6BAA6;text-decoration:line-through;}
+        .cmp-meta{font-size:9px;color:#B4A890;display:flex;gap:6px;flex-wrap:wrap;font-weight:600;}
         .mob-cmp-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;}
         .mob-cmp-scroll::-webkit-scrollbar{display:none;}
-        .mob-cmp-col{min-width:200px;background:#fff;border:1px solid #DDD6F5;border-radius:14px;overflow:hidden;flex-shrink:0;}
-        .overlay{position:fixed;inset:0;background:#2E1A4A66;display:flex;align-items:flex-end;justify-content:center;z-index:100;backdrop-filter:blur(5px);}
+        .mob-cmp-col{min-width:200px;background:#fff;border:1px solid #EBE2D4;border-radius:14px;overflow:hidden;flex-shrink:0;}
+        .overlay{position:fixed;inset:0;background:#3A2A1866;display:flex;align-items:flex-end;justify-content:center;z-index:100;backdrop-filter:blur(5px);}
         @media(min-width:640px){.overlay{align-items:center;}}
-        .modal{background:#fff;border:1px solid #DDD6F5;border-radius:20px 20px 0 0;padding:28px 24px;
-          width:100%;max-width:480px;box-shadow:0 -8px 40px #2E1A4A18;max-height:92vh;overflow-y:auto;}
+        .modal{background:#fff;border:1px solid #EBE2D4;border-radius:20px 20px 0 0;padding:28px 24px;
+          width:100%;max-width:480px;box-shadow:0 -8px 40px #3A2A1818;max-height:92vh;overflow-y:auto;}
         @media(min-width:640px){.modal{border-radius:20px;padding:30px;}}
         .modal-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#1E1A2E;margin-bottom:20px;}
         .modal-title span{background:linear-gradient(135deg,${PINK},${ORANGE});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
         .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;}
-        .cancel-btn{background:none;border:1px solid #DDD6F5;color:#A090C0;padding:10px 16px;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;}
-        .cancel-btn:hover{border-color:#B0A8CC;}
+        .cancel-btn{background:none;border:1px solid #EBE2D4;color:#9C8C76;padding:10px 16px;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;}
+        .cancel-btn:hover{border-color:#B4A88F;}
         .delete-btn{background:none;border:1px solid ${PINK}44;color:${PINK};padding:10px 16px;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;margin-right:auto;}
         .delete-btn:hover{background:#FFF0F5;}
         .flag-box{background:#FFFBF0;border:1px solid #D4A80044;border-radius:14px;padding:24px;text-align:center;}
         .flag-icon{font-size:32px;margin-bottom:10px;}
         .flag-title{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#A07800;margin-bottom:8px;}
-        .flag-desc{font-size:13px;color:#A090C0;margin-bottom:18px;line-height:1.7;font-weight:500;}
+        .flag-desc{font-size:13px;color:#9C8C76;margin-bottom:18px;line-height:1.7;font-weight:500;}
         .flag-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
         .defer-box{text-align:center;}
         .defer-icon{font-size:30px;margin-bottom:10px;}
         .defer-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#1E1A2E;margin-bottom:6px;}
-        .defer-sub{font-size:12px;color:#A090C0;margin-bottom:20px;font-weight:500;}
+        .defer-sub{font-size:12px;color:#9C8C76;margin-bottom:20px;font-weight:500;}
         @media(max-width:768px){
           .desktop-layout{display:none!important;}
           .mobile-layout{display:flex!important;}
@@ -1372,7 +1372,7 @@ export default function Flourish() {
         @media(min-width:769px){.mob-nav{display:none!important;}.fab{display:none!important;}}
         ::-webkit-scrollbar{width:4px;height:4px;}
         ::-webkit-scrollbar-track{background:transparent;}
-        ::-webkit-scrollbar-thumb{background:#DDD6F5;border-radius:2px;}
+        ::-webkit-scrollbar-thumb{background:#EBE2D4;border-radius:2px;}
       `}</style>
 
       <div className="app">
@@ -1388,7 +1388,7 @@ export default function Flourish() {
                 <input value={budgetInput} onChange={e=>setBudgetInput(e.target.value)}
                   onKeyDown={e=>{if(e.key==="Enter")saveBudget();if(e.key==="Escape")setEditingBudget(false);}}
                   autoFocus style={{fontFamily:"Syne,sans-serif",fontSize:15,fontWeight:800,color:"#1E1A2E",
-                    background:"#F8F5FF",border:`1.5px solid ${PINK}`,borderRadius:8,padding:"2px 8px",width:100,textAlign:"right",outline:"none"}}/>
+                    background:"#FCF8F2",border:`1.5px solid ${PINK}`,borderRadius:8,padding:"2px 8px",width:100,textAlign:"right",outline:"none"}}/>
               ):(
                 <span className="hdr-stat-val budget-tap" onClick={()=>{setBudgetInput(String(budget));setEditingBudget(true);}}>
                   ${budget.toLocaleString()} <span style={{fontSize:10,color:PINK}}>✎</span>
@@ -1411,15 +1411,15 @@ export default function Flourish() {
               <div className="sec-label">My Buckets</div>
               <div className="bucket-nav">
                 <button className={`bkt-btn ${activeBucket==="all"?"active":""}`}
-                  style={{"--bc":"#7060A0","--bbg":"#EDE8FA"}} onClick={()=>setActiveBucket("all")}>
+                  style={{"--bc":"#786849","--bbg":"#FBF7F2"}} onClick={()=>setActiveBucket("all")}>
                   <span className="bkt-icon">✨</span><span>All Tasks</span>
-                  <span className="bkt-count" style={{color:activeBucket==="all"?"#7060A0":"#C0B8D8"}}>{tasks.length}</span>
+                  <span className="bkt-count" style={{color:activeBucket==="all"?"#786849":"#C6BAA6"}}>{tasks.length}</span>
                 </button>
                 {BUCKETS.map(b=>(
                   <button key={b.id} className={`bkt-btn ${activeBucket===b.id?"active":""}`}
                     style={{"--bc":b.color,"--bbg":b.bg}} onClick={()=>setActiveBucket(b.id)}>
                     <span className="bkt-icon">{b.icon}</span><span>{b.label}</span>
-                    <span className="bkt-count" style={{color:activeBucket===b.id?b.color:"#C0B8D8"}}>
+                    <span className="bkt-count" style={{color:activeBucket===b.id?b.color:"#C6BAA6"}}>
                       {tasks.filter(t=>t.bucket===b.id).length}
                     </span>
                   </button>
@@ -1436,7 +1436,7 @@ export default function Flourish() {
                   const c=tasks.filter(t=>t.bucket===b.id&&t.budgetStatus==="fits"&&t.cost).reduce((s,t)=>s+t.cost,0);
                   if(!c) return null;
                   return <div key={b.id} style={{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:700}}>
-                    <span style={{color:"#A090C0"}}>{b.icon} {b.label}</span>
+                    <span style={{color:"#9C8C76"}}>{b.icon} {b.label}</span>
                     <span style={{color:b.color,fontFamily:"Syne",fontWeight:800}}>${c}</span>
                   </div>;
                 })}
@@ -1466,7 +1466,7 @@ export default function Flourish() {
                 return <div key={key} className="urg-row">
                   <span style={{display:"flex",alignItems:"center",gap:7}}>
                     <span style={{width:7,height:7,borderRadius:"50%",background:cfg.dot,display:"inline-block"}}/>
-                    <span style={{color:"#A090C0",fontSize:11,fontWeight:700}}>{cfg.label}</span>
+                    <span style={{color:"#9C8C76",fontSize:11,fontWeight:700}}>{cfg.label}</span>
                   </span>
                   <span style={{color:cfg.text,fontFamily:"Syne",fontWeight:800,fontSize:13}}>{count}</span>
                 </div>;
@@ -1485,7 +1485,7 @@ export default function Flourish() {
               </div>
               <div className="hdr-right">
                 {!selectMode?(
-                  <button className="act-btn" style={{border:`1px solid #DDD6F5`,color:"#A090C0",background:"#fff",padding:"7px 14px",borderRadius:9,fontSize:11,fontFamily:"Syne,sans-serif",fontWeight:700,cursor:"pointer"}}
+                  <button className="act-btn" style={{border:`1px solid #EBE2D4`,color:"#9C8C76",background:"#fff",padding:"7px 14px",borderRadius:9,fontSize:11,fontFamily:"Syne,sans-serif",fontWeight:700,cursor:"pointer"}}
                     onClick={()=>{setSelectMode(true);setSelectedIds(new Set());}}>☑ Select</button>
                 ):(
                   <button className="act-btn" style={{border:`1px solid ${PINK}44`,color:PINK,background:"#FFF0F5",padding:"7px 14px",borderRadius:9,fontSize:11,fontFamily:"Syne,sans-serif",fontWeight:700,cursor:"pointer"}}
@@ -1505,7 +1505,7 @@ export default function Flourish() {
                 <span style={{fontSize:12,fontWeight:700,color:PINK}}>{selectedIds.size} selected</span>
                 <div style={{display:"flex",gap:12}}>
                   <button onClick={selectAll} style={{background:"none",border:"none",color:PINK,fontSize:11,fontWeight:700,cursor:"pointer"}}>Select all ({display.length})</button>
-                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#A090C0",fontSize:11,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
+                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#9C8C76",fontSize:11,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
                 </div>
               </div>
             )}
@@ -1516,8 +1516,8 @@ export default function Flourish() {
                 ))}
               </div>
               <button onClick={()=>setHideCompleted(p=>!p)}
-                style={{background:"none",border:"1px solid #DDD6F5",borderRadius:8,padding:"5px 12px",
-                  fontSize:11,fontWeight:700,cursor:"pointer",color:hideCompleted?"#00A060":"#A090C0",
+                style={{background:"none",border:"1px solid #EBE2D4",borderRadius:8,padding:"5px 12px",
+                  fontSize:11,fontWeight:700,cursor:"pointer",color:hideCompleted?"#00A060":"#9C8C76",
                   fontFamily:"Syne,sans-serif",whiteSpace:"nowrap"}}>
                 {hideCompleted?"Show Completed":"Hide Completed"}
               </button>
@@ -1530,7 +1530,7 @@ export default function Flourish() {
               <div style={{position:"sticky",bottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",
                 padding:"12px 18px",background:"#fff",border:`1.5px solid ${PINK}44`,borderRadius:14,
                 boxShadow:`0 4px 20px ${PINK}22`,marginTop:12}}>
-                <span style={{fontSize:13,color:"#A090C0",fontWeight:600}}>{selectedIds.size} task{selectedIds.size!==1?"s":""} selected</span>
+                <span style={{fontSize:13,color:"#9C8C76",fontWeight:600}}>{selectedIds.size} task{selectedIds.size!==1?"s":""} selected</span>
                 <button onClick={batchDelete} style={{background:PINK,color:"#fff",border:"none",
                   padding:"9px 20px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",
                   display:"flex",alignItems:"center",gap:6,fontFamily:"Syne,sans-serif"}}>
@@ -1544,13 +1544,13 @@ export default function Flourish() {
         {/* MOBILE */}
         <div className="mobile-layout" style={{"--ac":accent}}>
           <div className="mob-bucket-strip">
-            <div className={`mob-bkt ${activeBucket==="all"?"active":""}`} style={{"--bc":"#7060A0","--bbg":"#EDE8FA"}} onClick={()=>setActiveBucket("all")}>
+            <div className={`mob-bkt ${activeBucket==="all"?"active":""}`} style={{"--bc":"#786849","--bbg":"#FBF7F2"}} onClick={()=>setActiveBucket("all")}>
               <span>✨</span><span>All</span>
             </div>
             {BUCKETS.map(b=>(
               <div key={b.id} className={`mob-bkt ${activeBucket===b.id?"active":""}`} style={{"--bc":b.color,"--bbg":b.bg}} onClick={()=>setActiveBucket(b.id)}>
                 <span>{b.icon}</span><span>{b.label.split(" ")[0]}</span>
-                <span style={{fontFamily:"Syne",fontWeight:800,fontSize:11,marginLeft:2,color:activeBucket===b.id?b.color:"#C0B8D8"}}>
+                <span style={{fontFamily:"Syne",fontWeight:800,fontSize:11,marginLeft:2,color:activeBucket===b.id?b.color:"#C6BAA6"}}>
                   {tasks.filter(t=>t.bucket===b.id).length}
                 </span>
               </div>
@@ -1587,7 +1587,7 @@ export default function Flourish() {
                 <span style={{fontSize:11,fontWeight:700,color:PINK}}>{selectedIds.size} selected</span>
                 <div style={{display:"flex",gap:10}}>
                   <button onClick={selectAll} style={{background:"none",border:"none",color:PINK,fontSize:10,fontWeight:700,cursor:"pointer"}}>Select all</button>
-                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#A090C0",fontSize:10,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
+                  <button onClick={deselectAll} style={{background:"none",border:"none",color:"#9C8C76",fontSize:10,fontWeight:600,cursor:"pointer"}}>Deselect all</button>
                 </div>
               </div>
             )}
@@ -1599,7 +1599,7 @@ export default function Flourish() {
               <div style={{position:"sticky",bottom:8,display:"flex",alignItems:"center",justifyContent:"space-between",
                 padding:"12px 16px",background:"#fff",border:`1.5px solid ${PINK}44`,borderRadius:14,
                 boxShadow:`0 4px 20px ${PINK}22`,marginTop:10}}>
-                <span style={{fontSize:12,color:"#A090C0",fontWeight:600}}>{selectedIds.size} selected</span>
+                <span style={{fontSize:12,color:"#9C8C76",fontWeight:600}}>{selectedIds.size} selected</span>
                 <button onClick={batchDelete} style={{background:PINK,color:"#fff",border:"none",
                   padding:"9px 18px",borderRadius:9,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Syne,sans-serif"}}>
                   🗑 Delete {selectedIds.size}
@@ -1745,12 +1745,12 @@ export default function Flourish() {
                 ].map(m=>(
                   <button key={m.id} onClick={m.action}
                     style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,
-                      border:m.id==="drive"?"1px solid #0099CC44":"1px solid #DDD6F5",
-                      background:m.id==="drive"?"#F0FAFF":"#F8F5FF",cursor:"pointer",textAlign:"left",width:"100%"}}>
+                      border:m.id==="drive"?"1px solid #0099CC44":"1px solid #EBE2D4",
+                      background:m.id==="drive"?"#F0FAFF":"#FCF8F2",cursor:"pointer",textAlign:"left",width:"100%"}}>
                     <span style={{fontSize:24}}>{m.icon}</span>
                     <div>
                       <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:14,color:m.id==="drive"?CYAN:"#1E1A2E"}}>{m.label}</div>
-                      <div style={{fontSize:11,color:"#A090C0",marginTop:2,fontWeight:500}}>{m.desc}</div>
+                      <div style={{fontSize:11,color:"#9C8C76",marginTop:2,fontWeight:500}}>{m.desc}</div>
                     </div>
                   </button>
                 ))}
@@ -1770,8 +1770,8 @@ export default function Flourish() {
               <Field label="Total Budget ($)">
                 <input type="number" value={budgetInput} autoFocus onChange={e=>setBudgetInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveBudget()} style={inputSty}/>
               </Field>
-              <div style={{background:"#F8F5FF",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
-                <div style={{fontSize:11,color:"#A090C0",fontWeight:600,marginBottom:8}}>Current Breakdown</div>
+              <div style={{background:"#FCF8F2",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
+                <div style={{fontSize:11,color:"#9C8C76",fontWeight:600,marginBottom:8}}>Current Breakdown</div>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700,marginBottom:4}}>
                   <span>Committed</span><span style={{color:ORANGE}}>${spent}</span>
                 </div>
@@ -1851,15 +1851,15 @@ function TimeAllocChart({ tasks, onClose }) {
           {slices.map(s => <path key={s.id} d={s.d} fill={s.color}/>)}
           <circle cx="65" cy="65" r="32" fill="white"/>
           <text x="65" y="61" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1E1A2E">{tasks.length}</text>
-          <text x="65" y="74" textAnchor="middle" fontSize="9" fill="#A090C0">tasks</text>
+          <text x="65" y="74" textAnchor="middle" fontSize="9" fill="#9C8C76">tasks</text>
         </svg>
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {bucketData.map(b => (
           <div key={b.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
             <div style={{ width:10, height:10, borderRadius:2, background:b.color, flexShrink:0 }}/>
-            <span style={{ fontSize:11, color:"#A090C0", flex:1 }}>{b.label}</span>
-            <div style={{ width:60, height:4, background:"#DDD6F5", borderRadius:2, overflow:"hidden" }}>
+            <span style={{ fontSize:11, color:"#9C8C76", flex:1 }}>{b.label}</span>
+            <div style={{ width:60, height:4, background:"#EBE2D4", borderRadius:2, overflow:"hidden" }}>
               <div style={{ width:`${b.pct}%`, height:"100%", background:b.color, borderRadius:2 }}/>
             </div>
             <span style={{ fontSize:11, fontWeight:700, color:b.color, minWidth:28, textAlign:"right" }}>{b.pct}%</span>
@@ -1904,33 +1904,33 @@ function TimeAllocModal({ tasks, onClose }) {
   return (
     <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth:480 }}>
-        <div style={{ width:36, height:4, background:"#DDD6F5", borderRadius:2, margin:"0 auto 16px" }}/>
+        <div style={{ width:36, height:4, background:"#EBE2D4", borderRadius:2, margin:"0 auto 16px" }}/>
         <div className="modal-title">My <span>Time</span> Allocation</div>
         <div style={{ display:"flex", alignItems:"center", gap:20, marginBottom:20 }}>
           <svg width="90" height="90" viewBox="0 0 90 90">
             {slices.map(s => <path key={s.id} d={s.d} fill={s.color}/>)}
             <circle cx="45" cy="45" r="22" fill="white"/>
             <text x="45" y="42" textAnchor="middle" fontSize="11" fontWeight="700" fill="#1E1A2E">{tasks.length}</text>
-            <text x="45" y="53" textAnchor="middle" fontSize="8" fill="#A090C0">tasks</text>
+            <text x="45" y="53" textAnchor="middle" fontSize="8" fill="#9C8C76">tasks</text>
           </svg>
           <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8 }}>
             {bucketData.map(b => (
               <div key={b.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                   <div style={{ width:8, height:8, borderRadius:2, background:b.color }}/>
-                  <span style={{ fontSize:11, color:"#A090C0" }}>{b.label.split(" ")[0]}</span>
+                  <span style={{ fontSize:11, color:"#9C8C76" }}>{b.label.split(" ")[0]}</span>
                 </div>
                 <span style={{ fontSize:11, fontWeight:700, color:b.color }}>{b.pct}%</span>
               </div>
             ))}
           </div>
         </div>
-        <div style={{ fontSize:9, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"#C0B8D8", marginBottom:10 }}>Task Breakdown</div>
+        <div style={{ fontSize:9, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase", color:"#C6BAA6", marginBottom:10 }}>Task Breakdown</div>
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
           {bucketData.map(b => (
             <div key={b.id} style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:10, color:"#A090C0", width:56 }}>{b.label.split(" ")[0]}</span>
-              <div style={{ flex:1, height:6, background:"#DDD6F5", borderRadius:3, overflow:"hidden" }}>
+              <span style={{ fontSize:10, color:"#9C8C76", width:56 }}>{b.label.split(" ")[0]}</span>
+              <div style={{ flex:1, height:6, background:"#EBE2D4", borderRadius:3, overflow:"hidden" }}>
                 <div style={{ width:`${b.pct}%`, height:"100%", background:b.color, borderRadius:3 }}/>
               </div>
               <span style={{ fontSize:10, fontWeight:700, color:b.color, width:20, textAlign:"right" }}>{b.count}</span>
@@ -2081,7 +2081,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
           >
             {selectMode ? (
               <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:32,flexShrink:0}}>
-                <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${selectedIds?.has(task.id)?PINK:"#DDD6F5"}`,
+                <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${selectedIds?.has(task.id)?PINK:"#EBE2D4"}`,
                   background:selectedIds?.has(task.id)?PINK:"#fff",
                   display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                   {selectedIds?.has(task.id)&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}
@@ -2091,7 +2091,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               <div className="pri-col">
               {canDrag ? (
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"4px 2px",
-                  color:"#C0B8D8",fontSize:14,cursor:"grab",userSelect:"none"}}>
+                  color:"#C6BAA6",fontSize:14,cursor:"grab",userSelect:"none"}}>
                   <span>⠿</span>
                 </div>
               ) : (
@@ -2106,7 +2106,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
             )}
             <div className="task-body">
               <div className="t-title-row">
-                <span className={`t-title ${task.status==="deferred"?"def":""}`} style={{textDecoration:isCompleted?"line-through":"none",color:isCompleted?"#A090C0":undefined}}>{task.title}</span>
+                <span className={`t-title ${task.status==="deferred"?"def":""}`} style={{textDecoration:isCompleted?"line-through":"none",color:isCompleted?"#9C8C76":undefined}}>{task.title}</span>
                 {activeBucket==="all"&&bucket&&(
                   <span className="bkt-pill" style={{borderColor:bucket.color+"55",color:bucket.color,background:bucket.bg}}>
                     {bucket.icon} {bucket.label}
@@ -2121,13 +2121,13 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
                   ?<span className={`cost-badge ${task.budgetStatus}`}>${task.cost.toLocaleString()} {task.budgetStatus==="fits"?"✓ Fits":task.budgetStatus==="defer"?"⚠ Over":""}</span>
                   :<span className="cost-badge flagged">⚑ Cost not set</span>
                 }
-                {task.status==="deferred"&&task.deferDate&&<span style={{color:"#B0A8C8"}}>🔁 {task.deferDate}</span>}
+                {task.status==="deferred"&&task.deferDate&&<span style={{color:"#B4A890"}}>🔁 {task.deferDate}</span>}
               </div>
               {task.notes&&<div className="t-notes">{task.notes}</div>}
             </div>
             <div className="act-col">
               <button className="act-btn" onClick={()=>onComplete(task.id)}
-                style={{borderColor:isCompleted?"#00AA6644":"#DDD6F5",color:isCompleted?"#00A060":"#A090C0",
+                style={{borderColor:isCompleted?"#00AA6644":"#EBE2D4",color:isCompleted?"#00A060":"#9C8C76",
                   background:isCompleted?"#E8F8F0":"none"}}>
                 {isCompleted?"↩ Undo":"✓ Done"}
               </button>
@@ -2141,7 +2141,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
         );
       })}
       {canDrag && tasks.length > 1 && (
-        <div style={{textAlign:"center",fontSize:10,color:"#C0B8D8",fontWeight:600,marginTop:6}}>
+        <div style={{textAlign:"center",fontSize:10,color:"#C6BAA6",fontWeight:600,marginTop:6}}>
           Hold & drag to reorder
         </div>
       )}
