@@ -1053,6 +1053,7 @@ export default function Flourish() {
   }, []);
   const [activeBucket, setActiveBucket]   = useState("all");
   const [viewMode, setViewMode]       = useState("list");
+  const [urgentOnly, setUrgentOnly]   = useState(false);
   const [showAdd, setShowAdd]         = useState(false);
   const [flagPrompt, setFlagPrompt]   = useState(null);
   const [inputMode, setInputMode]     = useState("manual");
@@ -1139,6 +1140,7 @@ export default function Flourish() {
   function getFiltered(bid) {
     let base = bid==="all" ? tasks : tasks.filter(t=>t.bucket===bid);
     if (hideCompleted) base = base.filter(t => t.status !== "completed");
+    if (urgentOnly) base = base.filter(t => t.status !== "completed" && ["overdue","critical","soon"].includes(getUrgency(t.dueDate,t.status)));
     return [...base].sort((a,b) => {
       const aComp = a.status === "completed" ? 1 : 0;
       const bComp = b.status === "completed" ? 1 : 0;
@@ -1298,6 +1300,15 @@ export default function Flourish() {
   const display   = getFiltered(activeBucket);
   const curBucket = BUCKETS.find(b=>b.id===activeBucket);
   const accent    = curBucket?.color || PINK;
+  const overdueCount = tasks.filter(t=>t.status!=="completed"&&t.status!=="deferred"&&getUrgency(t.dueDate,t.status)==="overdue").length;
+  const dueSoonCount = tasks.filter(t=>t.status!=="completed"&&t.status!=="deferred"&&["critical","soon"].includes(getUrgency(t.dueDate,t.status))).length;
+  function toggleUrgent() {
+    setUrgentOnly(p => {
+      const next = !p;
+      if (next) { setActiveBucket("all"); setViewMode("list"); }
+      return next;
+    });
+  }
 
   // Early returns AFTER all hooks
   if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
@@ -1602,6 +1613,7 @@ export default function Flourish() {
                 <button className="add-btn" onClick={()=>{setNewTask(p=>({...p,bucket:activeBucket!=="all"?activeBucket:"work"}));setInputMode("manual");setShowAdd(true);}}>+ Add Task</button>
               </div>
             </div>
+            {viewMode==="list"&&<AlertBanner overdueCount={overdueCount} dueSoonCount={dueSoonCount} urgentOnly={urgentOnly} onToggle={toggleUrgent}/>}
             {selectMode&&viewMode==="list"&&(
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
                 padding:"8px 14px",background:"#FFF0F5",border:`1px solid ${PINK}33`,
@@ -1694,6 +1706,7 @@ export default function Flourish() {
                 <button className={`mob-view-btn ${viewMode==="compare"?"active":""}`} onClick={()=>setViewMode("compare")}>Compare</button>
               </div>
             </div>
+            {viewMode==="list"&&<AlertBanner overdueCount={overdueCount} dueSoonCount={dueSoonCount} urgentOnly={urgentOnly} onToggle={toggleUrgent}/>}
             {selectMode&&viewMode==="list"&&(
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
                 padding:"8px 12px",background:"#FFF0F5",border:`1px solid ${PINK}33`,
@@ -2185,6 +2198,28 @@ function useDragSort(items, onReorder) {
       handleTouchEnd,
     }
   };
+}
+
+function AlertBanner({ overdueCount, dueSoonCount, urgentOnly, onToggle }) {
+  if (!overdueCount && !dueSoonCount && !urgentOnly) return null;
+  const parts = [];
+  if (overdueCount) parts.push(`${overdueCount} overdue`);
+  if (dueSoonCount) parts.push(`${dueSoonCount} due this week`);
+  const hasOverdue = overdueCount > 0;
+  const bg = hasOverdue ? "#FFEEE9" : "#FFF8E0";
+  const bd = hasOverdue ? "#FC4F38" : "#D4A800";
+  const tx = hasOverdue ? "#C0271A" : "#7D5E00";
+  return (
+    <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,
+      background:urgentOnly?"#FBF7F2":bg,border:`1.5px solid ${urgentOnly?"#EBE2D4":bd}`,
+      borderRadius:12,padding:"10px 14px",marginBottom:14,cursor:"pointer"}}>
+      <span style={{fontSize:18}}>{urgentOnly?"✓":"⚠️"}</span>
+      <div style={{flex:1,fontSize:13,fontWeight:700,color:urgentOnly?"#5C5343":tx}}>
+        {urgentOnly ? "Showing urgent tasks only" : parts.join("  ·  ")}
+      </div>
+      <span style={{fontSize:12,fontWeight:700,whiteSpace:"nowrap",color:urgentOnly?"#9C8C76":tx}}>{urgentOnly?"✕ Show all":"View ›"}</span>
+    </div>
+  );
 }
 
 function BucketBudgetHeader({ bucket, committed, cap, period, onEdit }) {
