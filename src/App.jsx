@@ -36,6 +36,28 @@ async function supaDelete(id) {
     });
   } catch(e) { console.error("delete error", e); }
 }
+async function supaGetBudgets() {
+  try {
+    const r = await fetch(getSupaURL() + "/rest/v1/bucket_budgets", { headers: getSupaHeaders() });
+    return r.ok ? r.json() : [];
+  } catch { return []; }
+}
+async function supaSaveBudget(bucket, amount) {
+  try {
+    await fetch(getSupaURL() + "/rest/v1/bucket_budgets", {
+      method: "POST",
+      headers: { ...getSupaHeaders(), "Prefer": "resolution=merge-duplicates" },
+      body: JSON.stringify([{ bucket, amount }])
+    });
+  } catch(e) { console.error("budget save error", e); }
+}
+async function supaDeleteBudget(bucket) {
+  try {
+    await fetch(getSupaURL() + "/rest/v1/bucket_budgets?bucket=eq." + bucket, {
+      method: "DELETE", headers: getSupaHeaders()
+    });
+  } catch(e) { console.error("budget delete error", e); }
+}
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');`;
 
@@ -345,6 +367,26 @@ function fmtDate(s) {
   if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || "";
   const [y, m, d] = s.split("-");
   return `${m}/${d}/${y}`;
+}
+
+// committed dollars in a bucket = costed, non-deferred tasks
+function bucketCommitted(tasks, bid) {
+  return tasks.filter(t => t.bucket === bid && t.cost && t.status !== "deferred")
+              .reduce((s, t) => s + Number(t.cost), 0);
+}
+// live status for a single task's cost relative to its bucket cap
+function taskBudgetState(task, tasks, bucketBudgets) {
+  if (task.cost == null || task.cost === "") return "flagged";
+  const cap = bucketBudgets[task.bucket];
+  if (cap == null || cap === "") return "tracked";
+  const peers = tasks.filter(t => t.bucket === task.bucket && t.cost && t.status !== "deferred")
+                     .sort((a, b) => (a.priority || 0) - (b.priority || 0));
+  let run = 0;
+  for (const t of peers) {
+    run += Number(t.cost);
+    if (t.id === task.id) return run > cap ? "over" : "fits";
+  }
+  return "fits";
 }
 
 function getUrgency(dueDateStr, status) {
@@ -942,6 +984,8 @@ export default function Flourish() {
   const [budget, setBudget]           = useState(2000);
   const [budgetInput, setBudgetInput] = useState("2000");
   const [editingBudget, setEditingBudget] = useState(false);
+  const [bucketBudgets, setBucketBudgets] = useState({});
+  const [budgetModal, setBudgetModal] = useState(null); // { bucket, input }
 
   // Load tasks from Supabase on mount
   useEffect(() => {
@@ -963,6 +1007,17 @@ export default function Flourish() {
       setIsLoadingFromDB(false);
     }
     loadTasks();
+  }, []);
+
+  // Load per-bucket budgets from Supabase on mount
+  useEffect(() => {
+    async function loadBudgets() {
+      const rows = await supaGetBudgets();
+      const map = {};
+      (rows || []).forEach(r => { if (r.amount != null && r.amount !== "") map[r.bucket] = Number(r.amount); });
+      setBucketBudgets(map);
+    }
+    loadBudgets();
   }, []);
   const [activeBucket, setActiveBucket]   = useState("all");
   const [viewMode, setViewMode]       = useState("list");
@@ -1022,6 +1077,28 @@ export default function Flourish() {
     const v = parseFloat(budgetInput);
     if (!isNaN(v)&&v>0) setBudget(v);
     setEditingBudget(false); setShowBudgetPanel(false);
+  }
+
+  function openBudgetModal(bid) {
+    const cur = bucketBudgets[bid];
+    setBudgetModal({ bucket: bid, input: cur != null ? String(cur) : "500" });
+  }
+  function saveBucketBudget() {
+    if (!budgetModal) return;
+    const bid = budgetModal.bucket;
+    const v = parseFloat(budgetModal.input);
+    if (!isNaN(v) && v > 0) {
+      setBucketBudgets(p => ({ ...p, [bid]: v }));
+      supaSaveBudget(bid, v);
+    }
+    setBudgetModal(null);
+  }
+  function clearBucketBudget() {
+    if (!budgetModal) return;
+    const bid = budgetModal.bucket;
+    setBucketBudgets(p => { const n = { ...p }; delete n[bid]; return n; });
+    supaDeleteBudget(bid);
+    setBudgetModal(null);
   }
 
   function getFiltered(bid) {
@@ -1323,6 +1400,8 @@ export default function Flourish() {
         .cost-badge{background:#F6F0E7;color:#6B6051;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;}
         .cost-badge.fits{color:#007A49;background:#E8F8F0;}
         .cost-badge.defer{color:#B34D00;background:#FFF3E8;}
+        .cost-badge.over{color:#B34D00;background:#FFF3E8;}
+        .cost-badge.tracked{color:#6B6051;background:#F6F0E7;}
         .cost-badge.flagged{color:#7D5E00;background:#FFF8E0;border:1px solid #D4A80044;}
         .t-notes{font-size:10px;color:#B4A88F;margin-top:4px;font-style:italic;}
         .act-col{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
@@ -1389,24 +1468,9 @@ export default function Flourish() {
           <div><div className="logo">flourish</div><div className="logo-sub">your goals, blooming</div></div>
           <div className="hdr-stats">
             <div className="hdr-stat">
-              <span className="hdr-stat-label">Budget</span>
-              {editingBudget?(
-                <input value={budgetInput} onChange={e=>setBudgetInput(e.target.value)}
-                  onKeyDown={e=>{if(e.key==="Enter")saveBudget();if(e.key==="Escape")setEditingBudget(false);}}
-                  autoFocus style={{fontFamily:"Syne,sans-serif",fontSize:15,fontWeight:800,color:"#1E1A2E",
-                    background:"#FCF8F2",border:`1.5px solid ${PINK}`,borderRadius:8,padding:"2px 8px",width:100,textAlign:"right",outline:"none"}}/>
-              ):(
-                <span className="hdr-stat-val budget-tap" onClick={()=>{setBudgetInput(String(budget));setEditingBudget(true);}}>
-                  ${budget.toLocaleString()} <span style={{fontSize:10,color:PINK}}>✎</span>
-                </span>
-              )}
+              <span className="hdr-stat-label">Tasks</span>
+              <span className="hdr-stat-val" style={{color:CYAN}}>{tasks.length}</span>
             </div>
-            {[{l:"Committed",v:`$${spent.toLocaleString()}`,c:ORANGE},{l:"Remaining",v:`$${remaining.toLocaleString()}`,c:remaining>=0?"#00A060":PINK},{l:"Tasks",v:tasks.length,c:CYAN}].map(s=>(
-              <div key={s.l} className="hdr-stat">
-                <span className="hdr-stat-label">{s.l}</span>
-                <span className="hdr-stat-val" style={{color:s.c}}>{s.v}</span>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -1421,30 +1485,30 @@ export default function Flourish() {
                   <span className="bkt-icon">✨</span><span>All Tasks</span>
                   <span className="bkt-count" style={{color:activeBucket==="all"?"#786849":"#C6BAA6"}}>{tasks.length}</span>
                 </button>
-                {BUCKETS.map(b=>(
-                  <button key={b.id} className={`bkt-btn ${activeBucket===b.id?"active":""}`}
-                    style={{"--bc":b.color,"--bbg":b.bg}} onClick={()=>setActiveBucket(b.id)}>
-                    <span className="bkt-icon">{b.icon}</span><span>{b.label}</span>
-                    <span className="bkt-count" style={{color:activeBucket===b.id?b.color:"#C6BAA6"}}>
-                      {tasks.filter(t=>t.bucket===b.id).length}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="sec-label">Budget Tracker</div>
-              <div className="bar-row"><span>Used</span><span style={{color:ORANGE}}>{Math.round(budgetPct)}%</span></div>
-              <div className="bar-bg"><div className="bar-fill" style={{width:`${budgetPct}%`}}/></div>
-              <div className="bar-row"><span style={{color:"#00A060"}}>${remaining} left</span><span style={{color:ORANGE}}>${spent} used</span></div>
-              <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:7}}>
                 {BUCKETS.map(b=>{
-                  const c=tasks.filter(t=>t.bucket===b.id&&t.budgetStatus==="fits"&&t.cost).reduce((s,t)=>s+t.cost,0);
-                  if(!c) return null;
-                  return <div key={b.id} style={{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:700}}>
-                    <span style={{color:"#9C8C76"}}>{b.icon} {b.label}</span>
-                    <span style={{color:b.color,fontFamily:"Syne",fontWeight:800}}>${c}</span>
-                  </div>;
+                  const cap = bucketBudgets[b.id];
+                  const committed = bucketCommitted(tasks, b.id);
+                  const pct = cap ? Math.min((committed/cap)*100,100) : 0;
+                  const over = cap != null && committed > cap;
+                  return (
+                  <div key={b.id}>
+                    <button className={`bkt-btn ${activeBucket===b.id?"active":""}`}
+                      style={{"--bc":b.color,"--bbg":b.bg}} onClick={()=>setActiveBucket(b.id)}>
+                      <span className="bkt-icon">{b.icon}</span><span>{b.label}</span>
+                      <span className="bkt-count" style={{color:activeBucket===b.id?b.color:"#C6BAA6"}}>
+                        {tasks.filter(t=>t.bucket===b.id).length}
+                      </span>
+                    </button>
+                    {cap != null && (
+                      <div style={{padding:"1px 12px 6px"}}>
+                        <div style={{height:4,background:"#EBE2D4",borderRadius:3,overflow:"hidden",marginBottom:2}}>
+                          <div style={{width:`${pct}%`,height:"100%",background:over?"#B34D00":b.color}}/>
+                        </div>
+                        <div style={{fontSize:9,color:over?"#B34D00":"#5C5343",fontWeight:700,textAlign:"right"}}>${committed} / ${cap}</div>
+                      </div>
+                    )}
+                  </div>
+                  );
                 })}
               </div>
             </div>
@@ -1456,7 +1520,6 @@ export default function Flourish() {
                 </button>
                 {[{id:"screenshot",label:"Screenshot / Image",icon:"📸",action:()=>setShowImage(true)},
                   {id:"paste",label:"Copy & Paste",icon:"📋",action:()=>setShowPaste(true)},
-                  {id:"apple-note",label:"Apple Note Export",icon:"📱",action:()=>setShowImage(true)},
                 ].map(m=>(
                   <button key={m.id} className="imp-btn" onClick={m.action}>
                     <span>{m.icon}</span><span>{m.label}</span>
@@ -1528,9 +1591,12 @@ export default function Flourish() {
                 {hideCompleted?"Show Completed":"Hide Completed"}
               </button>
             </div>
+            {activeBucket!=="all"&&viewMode==="list"&&(
+              <BucketBudgetHeader bucket={curBucket} committed={bucketCommitted(tasks,activeBucket)} cap={bucketBudgets[activeBucket]} onEdit={()=>openBudgetModal(activeBucket)}/>
+            )}
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
-              :<div className="cmp-grid">{BUCKETS.map(b=><CompareCol key={b.id} bucket={b} tasks={getFiltered(b.id)}/>)}</div>
+              ?<TaskList tasks={display} allTasks={tasks} bucketBudgets={bucketBudgets} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
+              :<div className="cmp-grid">{BUCKETS.map(b=><CompareCol key={b.id} bucket={b} tasks={getFiltered(b.id)} allTasks={tasks} bucketBudgets={bucketBudgets}/>)}</div>
             }
             {selectMode&&selectedIds.size>0&&(
               <div style={{position:"sticky",bottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",
@@ -1553,23 +1619,30 @@ export default function Flourish() {
             <div className={`mob-bkt ${activeBucket==="all"?"active":""}`} style={{"--bc":"#786849","--bbg":"#FBF7F2"}} onClick={()=>setActiveBucket("all")}>
               <span>✨</span><span>All</span>
             </div>
-            {BUCKETS.map(b=>(
-              <div key={b.id} className={`mob-bkt ${activeBucket===b.id?"active":""}`} style={{"--bc":b.color,"--bbg":b.bg}} onClick={()=>setActiveBucket(b.id)}>
-                <span>{b.icon}</span><span>{b.label.split(" ")[0]}</span>
-                <span style={{fontFamily:"Syne",fontWeight:800,fontSize:11,marginLeft:2,color:activeBucket===b.id?b.color:"#C6BAA6"}}>
-                  {tasks.filter(t=>t.bucket===b.id).length}
-                </span>
+            {BUCKETS.map(b=>{
+              const cap = bucketBudgets[b.id];
+              const committed = bucketCommitted(tasks, b.id);
+              const pct = cap ? Math.min((committed/cap)*100,100) : 0;
+              const over = cap != null && committed > cap;
+              return (
+              <div key={b.id} className={`mob-bkt ${activeBucket===b.id?"active":""}`} style={{"--bc":b.color,"--bbg":b.bg,flexDirection:"column",alignItems:"stretch"}} onClick={()=>setActiveBucket(b.id)}>
+                <div style={{display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+                  <span>{b.icon}</span><span>{b.label.split(" ")[0]}</span>
+                  <span style={{fontFamily:"Syne",fontWeight:800,fontSize:11,marginLeft:2,color:activeBucket===b.id?b.color:"#C6BAA6"}}>
+                    {tasks.filter(t=>t.bucket===b.id).length}
+                  </span>
+                </div>
+                {cap != null && (
+                  <div style={{marginTop:4}}>
+                    <div style={{height:3,background:"#EBE2D4",borderRadius:2,overflow:"hidden",marginBottom:2}}>
+                      <div style={{width:`${pct}%`,height:"100%",background:over?"#B34D00":b.color}}/>
+                    </div>
+                    <div style={{fontSize:8,fontWeight:700,color:over?"#B34D00":"#5C5343",textAlign:"center",whiteSpace:"nowrap"}}>${committed}/${cap}</div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-          <div className="mob-stats">
-            <div className="mob-stat">
-              <span className="mob-stat-label">Budget</span>
-              <span className="mob-stat-val budget-tap" style={{color:"#1E1A2E"}} onClick={()=>setShowBudgetPanel(true)}>${budget.toLocaleString()} ✎</span>
-            </div>
-            {[{l:"Committed",v:`$${spent}`,c:ORANGE},{l:"Remaining",v:`$${remaining}`,c:remaining>=0?"#00A060":PINK},{l:"Tasks",v:tasks.length,c:CYAN}].map(s=>(
-              <div key={s.l} className="mob-stat"><span className="mob-stat-label">{s.l}</span><span className="mob-stat-val" style={{color:s.c}}>{s.v}</span></div>
-            ))}
+              );
+            })}
           </div>
           <div className="mob-main">
             <div className="mob-top">
@@ -1597,9 +1670,12 @@ export default function Flourish() {
                 </div>
               </div>
             )}
+            {activeBucket!=="all"&&viewMode==="list"&&(
+              <BucketBudgetHeader bucket={curBucket} committed={bucketCommitted(tasks,activeBucket)} cap={bucketBudgets[activeBucket]} onEdit={()=>openBudgetModal(activeBucket)}/>
+            )}
             {viewMode==="list"
-              ?<TaskList tasks={display} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
-              :<div className="mob-cmp-scroll">{BUCKETS.map(b=><div key={b.id} className="mob-cmp-col cmp-col"><CompareCol bucket={b} tasks={getFiltered(b.id)}/></div>)}</div>
+              ?<TaskList tasks={display} allTasks={tasks} bucketBudgets={bucketBudgets} activeBucket={activeBucket} onMove={movePriority} onDate={updateDate} onEdit={t=>{setEditTask({...t,cost:t.cost??""});setEditSuggestion(null);}} onDefer={openDefer} onUndefer={undefer} onDragReorder={handleDragReorder} selectMode={selectMode} selectedIds={selectedIds} onToggleSelect={toggleSelect} onComplete={toggleComplete}/>
+              :<div className="mob-cmp-scroll">{BUCKETS.map(b=><div key={b.id} className="mob-cmp-col cmp-col"><CompareCol bucket={b} tasks={getFiltered(b.id)} allTasks={tasks} bucketBudgets={bucketBudgets}/></div>)}</div>
             }
             {selectMode&&selectedIds.size>0&&(
               <div style={{position:"sticky",bottom:8,display:"flex",alignItems:"center",justifyContent:"space-between",
@@ -1663,7 +1739,6 @@ export default function Flourish() {
                   <option value="screenshot">📸 Screenshot / Image</option>
                   <option value="paste">📋 Copy & Paste</option>
                   <option value="google-doc">📄 Google Doc / Sheet</option>
-                  <option value="apple-note">📱 Apple Note Export</option>
                 </select>
               </Field>
               <Field label="Due Date">
@@ -1747,7 +1822,6 @@ export default function Flourish() {
                   {id:"drive",label:"Google Drive (RWRLRR)",icon:"📄",desc:"Pull checklists & action plans",action:()=>{setShowImport(false);setShowDrive(true);}},
                   {id:"screenshot",label:"Screenshot / Image",icon:"📸",desc:"Photo of any note or list",action:()=>{setShowImport(false);setShowImage(true);}},
                   {id:"paste",label:"Copy & Paste",icon:"📋",desc:"Paste text from anywhere",action:()=>{setShowImport(false);setShowPaste(true);}},
-                  {id:"apple-note",label:"Apple Note Export",icon:"📱",desc:"Share or screenshot from Notes app",action:()=>{setShowImport(false);setShowImage(true);}},
                 ].map(m=>(
                   <button key={m.id} onClick={m.action}
                     style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,
@@ -1792,6 +1866,34 @@ export default function Flourish() {
             </div>
           </div>
         )}
+
+        {budgetModal&&(()=>{
+          const bk = BUCKETS.find(b=>b.id===budgetModal.bucket);
+          const committed = bucketCommitted(tasks, budgetModal.bucket);
+          const hasCurrent = bucketBudgets[budgetModal.bucket]!=null;
+          return (
+          <div className="overlay" onClick={e=>e.target===e.currentTarget&&setBudgetModal(null)}>
+            <div className="modal">
+              <div className="modal-title">{bk?.icon} <span>{bk?.label}</span> Budget</div>
+              <Field label="Budget cap ($)">
+                <input type="number" value={budgetModal.input} autoFocus onChange={e=>setBudgetModal(p=>({...p,input:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&saveBucketBudget()} style={inputSty}/>
+              </Field>
+              <div style={{background:"#FCF8F2",borderRadius:12,padding:"12px 16px",marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
+                  <span>Currently committed</span><span style={{color:ORANGE}}>${committed.toLocaleString()}</span>
+                </div>
+                <div style={{fontSize:11,color:"#9C8C76",marginTop:8}}>Leave a bucket without a budget to just track costs — no Fits / Over flags.</div>
+              </div>
+              <div className="modal-btns">
+                {hasCurrent
+                  ? <button className="cancel-btn" onClick={clearBucketBudget}>Remove budget</button>
+                  : <button className="cancel-btn" onClick={()=>setBudgetModal(null)}>Cancel</button>}
+                <button className="add-btn" onClick={saveBucketBudget}>Save</button>
+              </div>
+            </div>
+          </div>
+          );
+        })()}
 
         {/* MISSING COST */}
         {flagPrompt&&(
@@ -2040,7 +2142,38 @@ function useDragSort(items, onReorder) {
   };
 }
 
-function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder, selectMode, selectedIds, onToggleSelect, onComplete }) {
+function BucketBudgetHeader({ bucket, committed, cap, onEdit }) {
+  if (!bucket) return null;
+  const has = cap != null && cap !== "";
+  const pct = has ? Math.min((committed / cap) * 100, 100) : 0;
+  const over = has && committed > cap;
+  return (
+    <div style={{background:"#fff",border:"1px solid #EBE2D4",borderRadius:12,padding:14,marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:has?8:6}}>
+        <span style={{fontSize:16}}>{bucket.icon}</span>
+        <span style={{fontSize:16,fontWeight:700,color:"#1E1A2E"}}>{bucket.label}</span>
+        {has
+          ? <span onClick={onEdit} style={{marginLeft:"auto",fontSize:12,color:over?"#B34D00":"#5C5343",fontWeight:700,cursor:"pointer"}}>${committed.toLocaleString()} / ${Number(cap).toLocaleString()} <span style={{color:bucket.color}}>✎</span></span>
+          : <span onClick={onEdit} style={{marginLeft:"auto",fontSize:11,color:bucket.dark,fontWeight:700,border:`1px solid ${bucket.color}55`,borderRadius:14,padding:"3px 10px",cursor:"pointer"}}>+ Add budget</span>}
+      </div>
+      {has ? (
+        <>
+          <div style={{height:8,background:"#F1E9DE",borderRadius:4,overflow:"hidden",marginBottom:6}}>
+            <div style={{width:`${pct}%`,height:"100%",background:over?"#B34D00":bucket.color}}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:over?"#B34D00":"#5C5343",fontWeight:700}}>
+            <span>{over?`$${(committed-cap).toLocaleString()} over`:`$${(cap-committed).toLocaleString()} left`}</span>
+            <span>{Math.round((committed/cap)*100)}% used</span>
+          </div>
+        </>
+      ) : (
+        <div style={{fontSize:11,color:"#9C8C76",fontStyle:"italic"}}>No budget — tracking only{committed?` · $${committed.toLocaleString()} logged`:""}</div>
+      )}
+    </div>
+  );
+}
+
+function TaskList({ tasks, allTasks, bucketBudgets, activeBucket, onMove, onDate, onEdit, onDefer, onUndefer, onDragReorder, selectMode, selectedIds, onToggleSelect, onComplete }) {
   const canDrag = activeBucket !== "all" && !selectMode;
 
   const { displayItems, dragIndex, overIndex, handlers } = useDragSort(
@@ -2123,10 +2256,12 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               </div>
               <div className="t-meta">
                 <InlineDate value={task.dueDate} onChange={d=>onDate(task.id,d)}/>
-                {task.cost!==null&&task.cost!==undefined
-                  ?<span className={`cost-badge ${task.budgetStatus}`}>${task.cost.toLocaleString()} {task.budgetStatus==="fits"?"✓ Fits":task.budgetStatus==="defer"?"⚠ Over":""}</span>
-                  :<span className="cost-badge flagged">⚑ Cost not set</span>
-                }
+                {(() => {
+                  const cs = taskBudgetState(task, allTasks||tasks, bucketBudgets||{});
+                  if (cs === "flagged") return <span className="cost-badge flagged">⚑ Cost not set</span>;
+                  const label = cs==="fits"?"✓ Fits":cs==="over"?"⚠ Over":"· tracked";
+                  return <span className={`cost-badge ${cs}`}>${Number(task.cost).toLocaleString()} {label}</span>;
+                })()}
                 {task.status==="deferred"&&task.deferDate&&<span style={{color:"#5C5343",fontWeight:700}}>🔁 {fmtDate(task.deferDate)}</span>}
               </div>
               {task.notes&&<div className="t-notes">{task.notes}</div>}
@@ -2155,7 +2290,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
   );
 }
 
-function CompareCol({ bucket: b, tasks }) {
+function CompareCol({ bucket: b, tasks, allTasks, bucketBudgets }) {
   return (
     <div className="cmp-col">
       <div className="cmp-hdr" style={{"--bc":b.color,background:b.bg}}>
@@ -2176,7 +2311,7 @@ function CompareCol({ bucket: b, tasks }) {
               <div className="cmp-meta">
                 <span style={{color:cfg.text}}>● {cfg.label}</span>
                 <span style={{color:"#5C5343",fontWeight:700}}>📅 {fmtDate(task.dueDate)}</span>
-                {task.cost?<span style={{color:task.budgetStatus==="fits"?"#00A060":ORANGE}}>${task.cost}</span>:<span style={{color:"#A07800"}}>⚑</span>}
+                {task.cost?<span style={{color:taskBudgetState(task,allTasks||tasks,bucketBudgets||{})==="over"?ORANGE:taskBudgetState(task,allTasks||tasks,bucketBudgets||{})==="fits"?"#00A060":"#6B6051"}}>${task.cost}</span>:<span style={{color:"#A07800"}}>⚑</span>}
               </div>
             </div>
           );
