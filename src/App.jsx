@@ -296,11 +296,11 @@ const PURPLE = "#C56B4A";
 const YB     = "#FFE500";
 
 const BUCKETS = [
-  { id: "work",     label: "Work",            icon: "💼", color: PINK,   bg: "#FF2D7814" },
-  { id: "family",   label: "The Daily",        icon: "🏠", color: ORANGE, bg: "#FF6B0014" },
-  { id: "church",   label: "Faith",            icon: "✝️",  color: CYAN,   bg: "#0099CC14" },
-  { id: "me",       label: "Me Time",          icon: "🌟", color: YELLOW, bg: "#D4A80014" },
-  { id: "projects", label: "The Extras",       icon: "🎯", color: PURPLE, bg: "#C56B4A14" },
+  { id: "work",     label: "Work",            icon: "💼", color: PINK,   dark: "#C7185A", bg: "#FF2D7814" },
+  { id: "family",   label: "Daily",            icon: "🏠", color: ORANGE, dark: "#B34D00", bg: "#FF6B0014" },
+  { id: "church",   label: "Faith",            icon: "✝️",  color: CYAN,   dark: "#006E94", bg: "#0099CC14" },
+  { id: "me",       label: "Me Time",          icon: "🌟", color: YELLOW, dark: "#8A6F00", bg: "#D4A80014" },
+  { id: "projects", label: "Extras",           icon: "🎯", color: PURPLE, dark: "#9E4F30", bg: "#C56B4A14" },
 ];
 
 const BUCKET_KEYWORDS = {
@@ -341,6 +341,12 @@ const INIT_TASKS = [
   { id: 16, title: "Write abstract for DRJ",           bucket: "projects", priority: 2, dueDate: "2026-05-28", cost: null, budgetStatus: "flagged", status: "active",   source: "manual",     notes: "" },
 ];
 
+function fmtDate(s) {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || "";
+  const [y, m, d] = s.split("-");
+  return `${m}/${d}/${y}`;
+}
+
 function getUrgency(dueDateStr, status) {
   if (status === "deferred") return "deferred";
   const today = new Date("2026-05-09");
@@ -354,12 +360,12 @@ function getUrgency(dueDateStr, status) {
 }
 
 const UC = {
-  overdue:  { label: "OVERDUE",   bg: "#FF2D7818", border: "#FF2D78", text: "#FF2D78", dot: "#FF2D78" },
-  critical: { label: "DUE SOON",  bg: "#FF6B0018", border: "#FF6B00", text: "#FF6B00", dot: "#FF6B00" },
-  soon:     { label: "THIS WEEK", bg: "#D4A80018", border: "#D4A800", text: "#A07800", dot: "#D4A800" },
-  upcoming: { label: "UPCOMING",  bg: "#0099CC18", border: "#0099CC", text: "#0077AA", dot: "#0099CC" },
-  clear:    { label: "ON TRACK",  bg: "#00AA6618", border: "#00AA66", text: "#008850", dot: "#00AA66" },
-  deferred: { label: "DEFERRED",  bg: "#CCC0AB18", border: "#B4A88F", text: "#948876", dot: "#B4A88F" },
+  overdue:  { label: "OVERDUE",   bg: "#FF2D7818", border: "#FF2D78", text: "#BC1655", dot: "#FF2D78" },
+  critical: { label: "DUE SOON",  bg: "#FF6B0018", border: "#FF6B00", text: "#B34D00", dot: "#FF6B00" },
+  soon:     { label: "THIS WEEK", bg: "#D4A80018", border: "#D4A800", text: "#7D5E00", dot: "#D4A800" },
+  upcoming: { label: "UPCOMING",  bg: "#0099CC18", border: "#0099CC", text: "#005B83", dot: "#0099CC" },
+  clear:    { label: "ON TRACK",  bg: "#00AA6618", border: "#00AA66", text: "#00663C", dot: "#00AA66" },
+  deferred: { label: "DEFERRED",  bg: "#CCC0AB18", border: "#B4A88F", text: "#6B6051", dot: "#B4A88F" },
 };
 
 const SRC = { "manual":"✏️","apple-note":"📱","screenshot":"📸","google-doc":"📄","paste":"📋" };
@@ -384,8 +390,8 @@ function InlineDate({ value, onChange }) {
   );
   return (
     <span onClick={() => setEditing(true)} title="Tap to edit date"
-      style={{ cursor:"pointer",borderBottom:`1px dashed ${PINK}88`,paddingBottom:1 }}>
-      📅 {value}
+      style={{ cursor:"pointer",borderBottom:`1px dashed ${PINK}88`,paddingBottom:1,color:"#5C5343",fontWeight:700 }}>
+      📅 {fmtDate(value)}
     </span>
   );
 }
@@ -1276,7 +1282,7 @@ export default function Flourish() {
           padding:4px 6px;border-radius:10px;transition:all 0.15s;min-width:40px;}
         .mob-nav-item.active{background:#FBF7F2;}
         .mob-nav-icon{font-size:18px;line-height:1;}
-        .mob-nav-label{font-size:8px;font-weight:700;color:#B4A88F;letter-spacing:0.5px;text-transform:uppercase;}
+        .mob-nav-label{font-size:8px;font-weight:700;color:#7A6E58;letter-spacing:0.5px;text-transform:uppercase;}
         .mob-nav-item.active .mob-nav-label{color:${PINK};}
         .fab{position:fixed;bottom:max(76px,calc(60px + env(safe-area-inset-bottom)));right:18px;
           width:54px;height:54px;border-radius:27px;background:linear-gradient(135deg,${PINK},${ORANGE});
@@ -1314,10 +1320,10 @@ export default function Flourish() {
         .urg-badge{font-size:8px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:4px;border:1px solid;}
         .src-badge{font-size:11px;color:#C6BAA6;}
         .t-meta{display:flex;gap:8px;font-size:10px;color:#9C8C76;flex-wrap:wrap;align-items:center;font-weight:600;}
-        .cost-badge{background:#F6F0E7;color:#9C8C76;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;}
-        .cost-badge.fits{color:#00A060;background:#E8F8F0;}
-        .cost-badge.defer{color:${ORANGE};background:#FFF3E8;}
-        .cost-badge.flagged{color:#A07800;background:#FFF8E0;border:1px solid #D4A80044;}
+        .cost-badge{background:#F6F0E7;color:#6B6051;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;}
+        .cost-badge.fits{color:#007A49;background:#E8F8F0;}
+        .cost-badge.defer{color:#B34D00;background:#FFF3E8;}
+        .cost-badge.flagged{color:#7D5E00;background:#FFF8E0;border:1px solid #D4A80044;}
         .t-notes{font-size:10px;color:#B4A88F;margin-top:4px;font-style:italic;}
         .act-col{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
         .act-btn{background:none;border:1px solid #EBE2D4;color:#9C8C76;padding:4px 9px;border-radius:6px;
@@ -1625,7 +1631,7 @@ export default function Flourish() {
             <span className="mob-nav-icon">⬆️</span><span className="mob-nav-label">Import</span>
           </div>
           <div className="mob-nav-item" onClick={()=>setShowTimeAlloc(true)}>
-            <span className="mob-nav-icon">📊</span><span className="mob-nav-label" style={{color:"#8B5CF6"}}>My Time</span>
+            <span className="mob-nav-icon">📊</span><span className="mob-nav-label" style={{color:"#D08A6E"}}>My Time</span>
           </div>
         </div>
 
@@ -2108,7 +2114,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
               <div className="t-title-row">
                 <span className={`t-title ${task.status==="deferred"?"def":""}`} style={{textDecoration:isCompleted?"line-through":"none",color:isCompleted?"#9C8C76":undefined}}>{task.title}</span>
                 {activeBucket==="all"&&bucket&&(
-                  <span className="bkt-pill" style={{borderColor:bucket.color+"55",color:bucket.color,background:bucket.bg}}>
+                  <span className="bkt-pill" style={{borderColor:bucket.color+"55",color:bucket.dark,background:bucket.bg}}>
                     {bucket.icon} {bucket.label}
                   </span>
                 )}
@@ -2121,7 +2127,7 @@ function TaskList({ tasks, activeBucket, onMove, onDate, onEdit, onDefer, onUnde
                   ?<span className={`cost-badge ${task.budgetStatus}`}>${task.cost.toLocaleString()} {task.budgetStatus==="fits"?"✓ Fits":task.budgetStatus==="defer"?"⚠ Over":""}</span>
                   :<span className="cost-badge flagged">⚑ Cost not set</span>
                 }
-                {task.status==="deferred"&&task.deferDate&&<span style={{color:"#B4A890"}}>🔁 {task.deferDate}</span>}
+                {task.status==="deferred"&&task.deferDate&&<span style={{color:"#5C5343",fontWeight:700}}>🔁 {fmtDate(task.deferDate)}</span>}
               </div>
               {task.notes&&<div className="t-notes">{task.notes}</div>}
             </div>
@@ -2169,7 +2175,7 @@ function CompareCol({ bucket: b, tasks }) {
               </div>
               <div className="cmp-meta">
                 <span style={{color:cfg.text}}>● {cfg.label}</span>
-                <span>📅 {task.dueDate}</span>
+                <span style={{color:"#5C5343",fontWeight:700}}>📅 {fmtDate(task.dueDate)}</span>
                 {task.cost?<span style={{color:task.budgetStatus==="fits"?"#00A060":ORANGE}}>${task.cost}</span>:<span style={{color:"#A07800"}}>⚑</span>}
               </div>
             </div>
