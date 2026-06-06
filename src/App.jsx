@@ -1,8 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 // ── Supabase Client ──
 function getSupaURL() { return import.meta.env.VITE_SUPABASE_URL || ""; }
 function getSupaKey() { return import.meta.env.VITE_SUPABASE_ANON_KEY || ""; }
+
+// Auth client (used for Google sign-in / session). Data calls still use raw fetch below.
+const supabase = createClient(getSupaURL(), getSupaKey());
+
+// Invite-only allowlist — only these emails may use the app.
+const ALLOWED_EMAILS = ["lisa2mj@gmail.com", "s.s.washington2426@gmail.com"];
+function isAllowed(email) {
+  return !!email && ALLOWED_EMAILS.includes(email.trim().toLowerCase());
+}
+
 function getSupaHeaders() {
   const key = getSupaKey();
   return { "apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json" };
@@ -981,30 +992,80 @@ function DriveImport({ existingTasks, onConfirm, onClose, remaining }) {
   );
 }
 
+// ── Auth Screens ──
+function AuthLoading() {
+  return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#FBF7F2",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:26,background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>flourish</div>
+        <div style={{marginTop:10,color:"#9C8C76",fontSize:13}}>Loading…</div>
+      </div>
+    </div>
+  );
+}
+
+function Login() {
+  const [busy, setBusy] = useState(false);
+  async function signIn() {
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) { setBusy(false); alert("Sign-in error: " + error.message); }
+  }
+  return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#FBF7F2",fontFamily:"'Plus Jakarta Sans',sans-serif",padding:20}}>
+      <div style={{background:"#fff",border:"1px solid #EBE2D4",borderRadius:20,padding:"36px 30px",maxWidth:360,width:"100%",textAlign:"center",boxShadow:"0 10px 40px rgba(0,0,0,0.06)"}}>
+        <div style={{fontFamily:"Syne,sans-serif",fontWeight:800,fontSize:30,background:"linear-gradient(135deg,#FF2D78,#FF6B00)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>flourish</div>
+        <div style={{fontSize:11,letterSpacing:2,color:"#9C8C76",textTransform:"uppercase",marginBottom:24}}>your goals, blooming</div>
+        <div style={{fontSize:15,color:"#1E1A2E",fontWeight:600,marginBottom:6}}>Welcome</div>
+        <div style={{fontSize:13,color:"#9C8C76",marginBottom:24}}>Sign in to access your tasks and budgets.</div>
+        <button onClick={signIn} disabled={busy} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%",padding:"12px",borderRadius:12,border:"1px solid #EBE2D4",background:"#fff",cursor:busy?"default":"pointer",fontSize:14,fontWeight:700,color:"#1E1A2E"}}>
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.6 2.4 30.1 0 24 0 14.6 0 6.4 5.4 2.5 13.3l7.9 6.1C12.3 13.2 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.3 5.7c4.3-3.9 6.8-9.7 6.8-17.4z"/><path fill="#FBBC05" d="M10.4 28.6c-.5-1.5-.8-3-.8-4.6s.3-3.1.8-4.6l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.5 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.3-5.7c-2 1.4-4.6 2.2-7.7 2.2-6.3 0-11.7-3.7-13.6-9.4l-7.9 6.1C6.4 42.6 14.6 48 24 48z"/></svg>
+          {busy ? "Opening Google…" : "Sign in with Google"}
+        </button>
+        <div style={{fontSize:11,color:"#B4A88F",marginTop:18}}>Invite-only · access is limited to approved testers.</div>
+      </div>
+    </div>
+  );
+}
+
+function NotAllowed({ email, onSignOut }) {
+  return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#FBF7F2",fontFamily:"'Plus Jakarta Sans',sans-serif",padding:20}}>
+      <div style={{background:"#fff",border:"1px solid #EBE2D4",borderRadius:20,padding:"36px 30px",maxWidth:360,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:34,marginBottom:10}}>🌱</div>
+        <div style={{fontSize:17,color:"#1E1A2E",fontWeight:700,marginBottom:8}}>You're not on the list yet</div>
+        <div style={{fontSize:13,color:"#9C8C76",marginBottom:6}}>Flourish is invite-only during testing.</div>
+        <div style={{fontSize:12,color:"#B4A88F",marginBottom:22}}>{email} isn't an approved tester.</div>
+        <button onClick={onSignOut} style={{width:"100%",padding:"11px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#FF2D78,#FF6B00)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer"}}>Sign out</button>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──
 export default function Flourish() {
-  const [pinState, setPinState] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem("flourish_pin");
-      return stored ? JSON.parse(stored) : { pin: null, recoveryCode: null, unlocked: false };
-    } catch { return { pin: null, recoveryCode: null, unlocked: false }; }
-  });
+  // ── Auth (Phase A: Google sign-in + allowlist gate) ──
+  const [authReady, setAuthReady] = useState(false);
+  const [user, setUser] = useState(null);
 
-  function handleSetupComplete(pin, recoveryCode) {
-    const newPinState = { pin, recoveryCode, unlocked: true };
-    setPinState(newPinState);
-    try { sessionStorage.setItem("flourish_pin", JSON.stringify(newPinState)); } catch {}
-  }
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setUser(data.session?.user || null);
+      setAuthReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      setAuthReady(true);
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
 
-  function handleUnlock(attempt) {
-    if (attempt === "__RECOVERY__" || attempt === pinState.pin) {
-      const unlockedState = { ...pinState, unlocked: true };
-      setPinState(unlockedState);
-      try { sessionStorage.setItem("flourish_pin", JSON.stringify(unlockedState)); } catch {}
-      return true;
-    }
-    return false;
-  }
+  function handleSignOut() { supabase.auth.signOut(); }
 
   const [tasks, setTasks]             = useState([]);
   const [isLoadingFromDB, setIsLoadingFromDB]     = useState(true);
@@ -1311,8 +1372,9 @@ export default function Flourish() {
   }
 
   // Early returns AFTER all hooks
-  if (!pinState.pin) return <PinSetup onComplete={handleSetupComplete}/>;
-  if (!pinState.unlocked) return <PinLock onUnlock={handleUnlock} recoveryCode={pinState.recoveryCode}/>;
+  if (!authReady) return <AuthLoading/>;
+  if (!user) return <Login/>;
+  if (!isAllowed(user.email)) return <NotAllowed email={user.email} onSignOut={handleSignOut}/>;
   if (isLoadingFromDB) return (
     <div style={{minHeight:"100vh",background:"#FBF7F2",display:"flex",flexDirection:"column",
       alignItems:"center",justifyContent:"center",gap:16}}>
@@ -1516,6 +1578,10 @@ export default function Flourish() {
             <div className="hdr-stat">
               <span className="hdr-stat-label">Tasks</span>
               <span className="hdr-stat-val" style={{color:CYAN}}>{tasks.length}</span>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10,paddingLeft:16,marginLeft:4,borderLeft:"1px solid #EBE2D4"}}>
+              <span style={{fontSize:11,color:"#9C8C76",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.email}</span>
+              <button onClick={handleSignOut} style={{fontSize:11,fontWeight:700,color:"#5C5343",background:"#FBF7F2",border:"1px solid #EBE2D4",borderRadius:10,padding:"5px 12px",cursor:"pointer"}}>Sign out</button>
             </div>
           </div>
         </div>
@@ -1756,6 +1822,9 @@ export default function Flourish() {
           </div>
           <div className="mob-nav-item" onClick={()=>setShowTimeAlloc(true)}>
             <span className="mob-nav-icon">📊</span><span className="mob-nav-label" style={{color:"#D08A6E"}}>My Time</span>
+          </div>
+          <div className="mob-nav-item" onClick={handleSignOut}>
+            <span className="mob-nav-icon">🚪</span><span className="mob-nav-label">Sign Out</span>
           </div>
         </div>
 
@@ -2289,7 +2358,7 @@ function TaskList({ tasks, allTasks, bucketBudgets, bucketPeriods, activeBucket,
             data-drag-index={idx}
             className="task-card"
             style={{
-              borderLeftColor:cfg.border, borderLeftWidth:3,
+              borderLeftWidth:3,
               opacity: isBeingDragged ? 0.5 : isCompleted ? 0.6 : 1,
               transform: isBeingDragged ? "scale(1.02)" : isDropTarget ? "translateY(-3px)" : "none",
               boxShadow: isBeingDragged ? `0 8px 24px ${cfg.border}44` : isDropTarget ? `0 0 0 2px ${cfg.border}` : undefined,
