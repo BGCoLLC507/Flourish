@@ -9,14 +9,20 @@ function getSupaKey() { return import.meta.env.VITE_SUPABASE_ANON_KEY || ""; }
 const supabase = createClient(getSupaURL(), getSupaKey());
 
 // Invite-only allowlist — only these emails may use the app.
-const ALLOWED_EMAILS = ["lisa2mj@gmail.com", "s.s.washington2426@gmail.com"];
+const ALLOWED_EMAILS = ["lisa2mj@gmail.com", "s.s.washington2426@gmail.com", "niararenee@gmail.com"];
 function isAllowed(email) {
   return !!email && ALLOWED_EMAILS.includes(email.trim().toLowerCase());
 }
 
+// Current signed-in identity (set by auth state changes). Used so each user's
+// data requests authenticate as them (so per-user security rules apply).
+let _authToken = null;
+let _userId = null;
+function setAuthContext(token, uid) { _authToken = token; _userId = uid; }
+
 function getSupaHeaders() {
   const key = getSupaKey();
-  return { "apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json" };
+  return { "apikey": key, "Authorization": "Bearer " + (_authToken || key), "Content-Type": "application/json" };
 }
 async function supaGetTasks() {
   try {
@@ -26,10 +32,11 @@ async function supaGetTasks() {
 }
 async function supaUpsert(tasks) {
   try {
+    const stamped = (Array.isArray(tasks) ? tasks : [tasks]).map(t => ({ ...t, user_id: _userId }));
     await fetch(getSupaURL() + "/rest/v1/tasks", {
       method: "POST",
       headers: { ...getSupaHeaders(), "Prefer": "resolution=merge-duplicates" },
-      body: JSON.stringify(tasks)
+      body: JSON.stringify(stamped)
     });
   } catch(e) { console.error("save error", e); }
 }
@@ -58,7 +65,7 @@ async function supaSaveBudget(bucket, amount, period) {
     await fetch(getSupaURL() + "/rest/v1/bucket_budgets", {
       method: "POST",
       headers: { ...getSupaHeaders(), "Prefer": "resolution=merge-duplicates" },
-      body: JSON.stringify([{ bucket, amount, period: period || "none" }])
+      body: JSON.stringify([{ bucket, amount, period: period || "none", user_id: _userId }])
     });
   } catch(e) { console.error("budget save error", e); }
 }
@@ -1055,10 +1062,13 @@ export default function Flourish() {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      setUser(data.session?.user || null);
+      const s = data.session;
+      setAuthContext(s?.access_token || null, s?.user?.id || null);
+      setUser(s?.user || null);
       setAuthReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthContext(session?.access_token || null, session?.user?.id || null);
       setUser(session?.user || null);
       setAuthReady(true);
     });
@@ -1076,8 +1086,9 @@ export default function Flourish() {
   const [bucketPeriods, setBucketPeriods] = useState({});
   const [budgetModal, setBudgetModal] = useState(null); // { bucket, input, period }
 
-  // Load tasks from Supabase on mount
+  // Load tasks once the user is signed in and approved (so their token is active)
   useEffect(() => {
+    if (!user || !isAllowed(user.email)) return;
     async function loadTasks() {
       setIsLoadingFromDB(true);
       let saved = await supaGetTasks();
@@ -1089,17 +1100,18 @@ export default function Flourish() {
       if (saved && saved.length > 0) {
         setTasks(saved);
       } else {
-        // First time — seed with sample tasks
+        // First time for this account — seed with sample tasks
         setTasks(INIT_TASKS);
         await supaUpsert(INIT_TASKS);
       }
       setIsLoadingFromDB(false);
     }
     loadTasks();
-  }, []);
+  }, [user]);
 
-  // Load per-bucket budgets from Supabase on mount
+  // Load per-bucket budgets once signed in and approved
   useEffect(() => {
+    if (!user || !isAllowed(user.email)) return;
     async function loadBudgets() {
       const rows = await supaGetBudgets();
       const map = {}, pmap = {};
@@ -1111,7 +1123,7 @@ export default function Flourish() {
       setBucketPeriods(pmap);
     }
     loadBudgets();
-  }, []);
+  }, [user]);
   const [activeBucket, setActiveBucket]   = useState("all");
   const [viewMode, setViewMode]       = useState("list");
   const [urgentOnly, setUrgentOnly]   = useState(false);
@@ -1627,9 +1639,12 @@ export default function Flourish() {
             <div>
               <div className="sec-label">Import From</div>
               <div className="imp-list">
+                {/* Google Drive import hidden during testing — folder is hardwired to owner's RWRLRR. Revisit later (folder picker). */}
+                {false && (
                 <button className="imp-btn drive" onClick={()=>setShowDrive(true)}>
                   <span>📄</span><span>Google Drive (RWRLRR)</span>
                 </button>
+                )}
                 {[{id:"screenshot",label:"Screenshot / Image",icon:"📸",action:()=>setShowImage(true)},
                   {id:"paste",label:"Copy & Paste",icon:"📋",action:()=>setShowPaste(true)},
                 ].map(m=>(
@@ -1936,7 +1951,6 @@ export default function Flourish() {
               <div className="modal-title">Import <span>Tasks</span></div>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {[
-                  {id:"drive",label:"Google Drive (RWRLRR)",icon:"📄",desc:"Pull checklists & action plans",action:()=>{setShowImport(false);setShowDrive(true);}},
                   {id:"screenshot",label:"Screenshot / Image",icon:"📸",desc:"Photo of any note or list",action:()=>{setShowImport(false);setShowImage(true);}},
                   {id:"paste",label:"Copy & Paste",icon:"📋",desc:"Paste text from anywhere",action:()=>{setShowImport(false);setShowPaste(true);}},
                 ].map(m=>(
