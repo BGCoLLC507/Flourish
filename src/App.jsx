@@ -436,8 +436,10 @@ function taskBudgetState(task, tasks, bucketBudgets, bucketPeriods) {
 
 function getUrgency(dueDateStr, status) {
   if (status === "deferred") return "deferred";
-  const today = new Date("2026-05-09");
-  const due = new Date(dueDateStr);
+  if (!dueDateStr) return "clear";
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDateStr + "T00:00:00");
+  if (isNaN(due)) return "clear";
   const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
   if (diff < 0) return "overdue";
   if (diff <= 2) return "critical";
